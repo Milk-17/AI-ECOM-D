@@ -1,25 +1,36 @@
-// import 
-const express = require ('express');
-const router = express.Router ();
+const express = require('express');
+const router = express.Router();
 
 // Import controllers
-const { register,login,currentUser,forgotPassword, resetPassword , currentAdmin , changePassword } = require('../controllers/auth');
-// import middleware
-const { authCheck,adminCheck } = require('../middlewares/authCheck');
+const { 
+  register, 
+  login, 
+  currentUser, 
+  forgotPassword, 
+  resetPassword, 
+  currentAdmin, 
+  changePassword 
+} = require('../controllers/auth');
 
-// Enpoint http://localhost:5001/api/register
-router.post('/register',register);
-router.post('/login',login);
-// 1. Register / Login
+// Import middleware
+const { authCheck, adminCheck } = require('../middlewares/authCheck');
+
+// --- Routes ---
+
+// 1. Authentication (Register / Login)
+router.post('/register', register);
+router.post('/login', login);
+
+// 2. Forgot / Reset Password
 router.post("/forgot-password", forgotPassword);
-router.post("/reset-password/:token", resetPassword);
-// 2. Check User / Admin
-router.post('/current-user',authCheck,currentUser);
-router.post('/current-admin',authCheck,adminCheck,currentAdmin);
-// 3. Forgot / Reset Password
-router.post('/reset-password', resetPassword);
-router.post('/forgot-password', forgotPassword);
-// 4. Change Password
-router.put('/user/change-password', authCheck, changePassword)
+// สำคัญ: ต้องมี /:token เพื่อรับค่าจาก useParams ใน React
+router.post("/reset-password/:token", resetPassword); 
 
-module.exports = router 
+// 3. Check User / Admin (Middleware)
+router.post('/current-user', authCheck, currentUser);
+router.post('/current-admin', authCheck, adminCheck, currentAdmin);
+
+// 4. Change Password (User Logged in)
+router.put('/user/change-password', authCheck, changePassword);
+
+module.exports = router;

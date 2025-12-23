@@ -91,6 +91,52 @@ exports.removeCategory = async (req, res) => {
       res.status(500).json({ message: "remove category controller Error" });
     }
   };
+  // แก้ไข Category
+  exports.updateCategory = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name } = req.body;
+  
+      const categoryId = Number(id);
+  
+      // 1. ตรวจสอบว่า ID และ Name ถูกต้องหรือไม่
+      if (isNaN(categoryId)) {
+        return res.status(400).json({ message: "Invalid Category ID" });
+      }
+      if (!name) {
+        return res.status(400).json({ message: "Name is required" });
+      }
+  
+      // 2. ตรวจสอบว่ามีชื่อซ้ำหรือไม่ (โดยไม่นับตัวมันเอง)
+      // หา category อื่นที่มีชื่อนี้ แต่ ID ไม่ใช่ ID ที่เรากำลังแก้ไข
+      const existingCategory = await prisma.category.findFirst({
+        where: {
+          name: name,
+          NOT: { id: categoryId } 
+        }
+      });
+  
+      if (existingCategory) {
+        return res.status(400).json({ message: "Category with this name already exists" });
+      }
+  
+      // 3. ทำการอัปเดตข้อมูล
+      const category = await prisma.category.update({
+        where: { id: categoryId },
+        data: { name: name }
+      });
+  
+      res.send(category);
+  
+    } catch (err) {
+      // 4. ดักจับ Error กรณีหา ID ไม่เจอ (P2025)
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      console.log(err);
+      res.status(500).json({ message: "update category controller Error" });
+    }
+  };
 
 // ---------------- SubCategory Controller ----------------
 
@@ -190,3 +236,63 @@ exports.removeSubCategory = async (req, res) => {
    res.status(500).json({ message: "remove subcategory controller Error" });
    }
   };
+
+// แก้ไข SubCategory
+exports.updateSubCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, categoryId } = req.body; // รับ categoryId เผื่อต้องการย้ายหมวดแม่ด้วย
+
+    const subId = Number(id);
+
+    // 1. ตรวจสอบ ID
+    if (isNaN(subId)) {
+      return res.status(400).json({ message: "Invalid SubCategory ID" });
+    }
+    
+    // 2. ตรวจสอบว่าส่งชื่อมาแก้ไขหรือไม่
+    if (!name) {
+        return res.status(400).json({ message: "Name is required" });
+    }
+
+    // 3. เตรียมข้อมูลที่จะอัปเดต
+    const updateData = { name };
+
+    // ถ้ามีการส่ง categoryId มาเพื่อย้ายหมวดแม่ ให้ตรวจสอบและเพิ่มเข้าไปใน updateData
+    if (categoryId) {
+        const parentId = Number(categoryId);
+        if (isNaN(parentId)) {
+            return res.status(400).json({ message: "Invalid Parent Category ID" });
+        }
+        
+        // เช็คว่าแม่ตัวใหม่มีอยู่จริงไหม
+        const parentExists = await prisma.category.findUnique({
+            where: { id: parentId }
+        });
+        if (!parentExists) {
+            return res.status(404).json({ message: "Parent Category not found" });
+        }
+
+        updateData.categoryId = parentId;
+    }
+
+    // 4. (Optional) เช็คชื่อซ้ำในหมวดเดียวกัน (logic นี้ซับซ้อนหน่อย ถ้าไม่ซีเรียสเรื่องชื่อซ้ำใน sub ข้ามไปได้)
+    // ตรงนี้ผมละไว้ก่อนเพื่อให้โค้ดไม่ยาวเกินไป แต่ถ้าต้องการบอกได้ครับ
+
+    // 5. ทำการอัปเดต
+    const subCategory = await prisma.subCategory.update({
+      where: { id: subId },
+      data: updateData
+    });
+
+    res.send(subCategory);
+
+  } catch (err) {
+    // 6. ดักจับ Error กรณีหา ID ไม่เจอ (P2025)
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        return res.status(404).json({ message: "SubCategory not found" });
+    }
+    console.log(err);
+    res.status(500).json({ message: "update subcategory controller Error" });
+  }
+};

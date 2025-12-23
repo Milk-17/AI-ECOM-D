@@ -10,17 +10,17 @@ exports.register = async(req,res) => {
     //Code
     try{
         //code
-        const { email, password} = req.body
+        const { email, password , name} = req.body
        
 
         // 1 Validate body
         if(!email){
             //Code
-            return res.status(400).json({ massage : 'Email is require!!!!'});
+            return res.status(400).json({ message : 'Email is required!!!!'});
         }
         if(!password){
             //code
-            return res.status(400).json({ massage : 'Password is require!!!'});
+            return res.status(400).json({ message : 'Password is required!!!'});
         }
 
         // 2 Check Email in DB already ?
@@ -36,21 +36,19 @@ exports.register = async(req,res) => {
         // 3 HashPassword
         const hashPassword = await bcrypt.hash(password,10);
         
-
-
-        // 4 Register
+        // 4 Register Name
         await prisma.user.create({
-            data:{
-                email : email,
-                password : hashPassword
-            }
-        });
-
+          data : {
+            email : email,
+            password : hashPassword,
+            name : name 
+          }
+        })
 
         res.status(201).json({ success: true, message: "Register Success" });
     }catch (err) {
         //Error
-        console.log (err);6
+        console.log (err);
         res.status(500).json({ message : "Server Error" })   
     }
 
@@ -94,7 +92,7 @@ exports.login = async(req,res) => {
         
     }catch (err) {
         //Error
-        console.log (err);6
+        console.log (err);
         res.status(500).json({ message : "Server Error" })   
     }
 }
@@ -266,7 +264,7 @@ exports.forgotPassword = async (req, res) => {
           return res.status(400).json({ message: "User not found" });
       }
   
-      // 🔒 2. Security Check: เพิ่มกฎความปลอดภัยรหัสผ่านใหม่
+      //  2. Security Check: เพิ่มกฎความปลอดภัยรหัสผ่านใหม่
       // ต้องมี: ตัวเล็ก, ตัวใหญ่, ตัวเลข, อักขระพิเศษ, ยาว 8 ตัวขึ้นไป
       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/;
       

@@ -5,7 +5,7 @@ const morgan = require('morgan');
 //บิวอินฟังก์ชัน .js อยู่แล้ว
 const { readdirSync } = require ('fs');
 const cors = require('cors');  // Server connet Clyan
-
+const orderRoutes = require('./routes/order');
 
 
 //const authRouter = require ('./routes/auth');
@@ -18,6 +18,7 @@ const cors = require('cors');  // Server connet Clyan
  app.use(morgan('dev'));
  app.use(express.json({limit: '15mb'}));
  app.use(cors());
+ app.use('/api', orderRoutes);
 
 // app.use('/api',authRouter);
 // app.use('/api',categoryRouter);

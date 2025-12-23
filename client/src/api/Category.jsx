@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-
-
+// ---------------- Main Category ----------------
 
 export const createCategory = async (token , form) => {
     return await axios.post('http://localhost:5001/api/category',form,{
@@ -23,30 +22,52 @@ export const removeCategory = async (token,id) => {
     })
 }
 
+//  เพิ่มฟังก์ชัน Update Main Category 
+export const updateCategory = async (token, id, form) => {
+    return await axios.put('http://localhost:5001/api/category/'+id, form, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    })
+}
 
-// สร้าง SubCategory
+
+// ---------------- Sub Category ----------------
+
 export const createSubCategory = async (token, form) => {
     // 'form' คือ object ที่มี { name, categoryId }
     return await axios.post(
-      "http://localhost:5001/api/subcategory", // <--- ใช้ endpoint ของ subcategory
+      "http://localhost:5001/api/subcategory", 
       form,
       {
         headers: {
-          Authorization: `Bearer ${token}`, // <--- ใช้ Auth header รูปแบบเดียวกับ createCategory
+          Authorization: `Bearer ${token}`, 
         },
       }
     );
-  };
+};
   
-  // ลบ SubCategory
-  export const removeSubCategory = async (token, id) => {
+// ลบ SubCategory
+export const removeSubCategory = async (token, id) => {
     return await axios.delete(
-      "http://localhost:5001/api/subcategory/" + id, // <--- ใช้ endpoint ของ subcategory
-      {
+        "http://localhost:5001/api/subcategory/" + id, 
+        {
         headers: {
-          Authorization: `Bearer ${token}`, // <--- ใช้ Auth header รูปแบบเดียวกับ removeCategory
+            Authorization: `Bearer ${token}`, 
         },
-      }
+        }
     );
-  };
-  // *** สิ้นสุดการแก้ไข ***
+};
+
+//  เพิ่มฟังก์ชัน Update Sub Category 
+export const updateSubCategory = async (token, id, form) => {
+    return await axios.put(
+        "http://localhost:5001/api/subcategory/" + id, 
+        form,
+        {
+        headers: {
+            Authorization: `Bearer ${token}`, 
+        },
+        }
+    );
+};

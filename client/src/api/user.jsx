@@ -30,11 +30,24 @@ export const getAddress = async (token) => {
 }
 
 // ลบที่อยู่
-export const deleteAddress = async (token, id) => {
-    return await axios.delete(`http://localhost:5001/api/user/address/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-    })
-}
+export const deleteAddress = async (token, addressId) => {
+  return await axios.delete(`http://localhost:5001/api/user/address/${addressId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+export const updateAddress = async (token, addressId, form) => {
+  return await axios.put(
+    "http://localhost:5001/api/user/address", 
+    {
+      addressId,
+      ...form
+    },
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+};
 
 // ================= ORDER APIs =================
 
@@ -74,3 +87,4 @@ export const updateUserProfile = async (token, value) => {
       }
     );
   };
+

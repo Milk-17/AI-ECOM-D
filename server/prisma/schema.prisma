@@ -66,8 +66,8 @@ model Product {
   quantity    Int
   productUrl  String?          // URL path ไปยัง ProductDetailCard
   orderItems  ProductOnOrder[]
-  carges      Image[]
-  cretItems   ProductOnCart[]
+  images      Image[]
+  cartItems   ProductOnCart[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 

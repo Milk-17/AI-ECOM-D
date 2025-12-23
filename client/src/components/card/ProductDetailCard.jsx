@@ -59,13 +59,13 @@ const ProductDetailCard = () => {
       >
         {/* Left: รูปสินค้า */}
         <div className="md:w-1/2 flex flex-col items-center justify-center gap-4">
-          {product.carges && product.carges.length > 0 ? (
+          {product.images && product.images.length > 0 ? (
             <Swiper
               navigation={true}
               modules={[Navigation]}
               className="w-full h-64 md:h-96 rounded-lg"
             >
-              {product.carges.map((img, index) => (
+              {product.images.map((img, index) => (
                 <SwiperSlide key={index}>
                   <img
                     src={img.url}

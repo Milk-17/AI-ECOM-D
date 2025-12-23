@@ -15,6 +15,8 @@ const TableOrders = () => {
   const [trackingInputs, setTrackingInputs] = useState({});
   const [tab, setTab] = useState("All");
 
+  
+
   useEffect(() => {
     handleGetOrder(token);
   }, []);
@@ -79,6 +81,11 @@ const TableOrders = () => {
     return item.orderStatus === tab;
   });
 
+  const handleSaveTrackingSuccess = (updatedOrders) => {
+    setOrders(updatedOrders); //  อัพเดท orders หลัก
+    //  filteredOrders จะอัพเดทอัตโนมัติจากการ re-render เพราะ dependency
+  };
+
   return (
     <div className="container mx-auto p-6 bg-white shadow-lg rounded-lg border border-gray-200">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-gray-800">
@@ -100,6 +107,7 @@ const TableOrders = () => {
         handleChangeOrderStatus={handleChangeOrderStatus}
         loading={loading}
         token={token}
+        onSaveSuccess={handleSaveTrackingSuccess}
       />
     </div>
   );

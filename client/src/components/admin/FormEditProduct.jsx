@@ -45,7 +45,7 @@ const FormEditProduct = () => {
           // Mapping ให้ตรงกับ Form: categoryId ในฟอร์มเราคือ SubCategory ID
           categoryId: res.data.subCategoryId,
           // Mapping carges เป็น images เพื่อให้สามารถแสดงรูปเดิม
-          images: res.data.carges || []
+          images: res.data.images || []
       });
 
       // ตั้งค่า Main Category เพื่อให้ Dropdown แสดงถูกตัว

@@ -10,6 +10,7 @@ import Register from "../pages/auth/Register";
 import Layout from "../layouts/Layout";
 import LayoutAdmin from "../layouts/LayoutAdmin";
 import Dashboard from "../pages/admin/Dashboard";
+import AdminDashboard from "../pages/admin/AdminDashboard";
 import Category from "../pages/admin/Category";
 import Product from "../pages/admin/Product";
 import Manage from "../pages/admin/Manage";
@@ -69,6 +70,8 @@ const router = createBrowserRouter([
       { path: "manage", element: <Manage /> },
       { path: "orders", element: <ManageOrders /> },
       { path: "productpricehistory", element: <FormProductPriceHistory /> },
+      {path: "AdminDashboard", element: <AdminDashboard /> },
+
     ],
   },
 

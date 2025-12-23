@@ -60,10 +60,10 @@ const ListCart = () => {
                 
                 {/* Row Left: Image & Info */}
                 <div className="flex gap-4 items-center">
-                  {item.carges && item.carges.length > 0 ? (
+                  {item.images && item.images.length > 0 ? (
                     <img
                       className="w-20 h-20 rounded-lg shadow-sm object-cover"
-                      src={item.carges[0].url}
+                      src={item.images[0].url}
                       alt={item.title}
                     />
                   ) : (

@@ -1,5 +1,5 @@
 const prisma = require('../config/prisma');
-
+const { authCheck } = require('../middlewares/authCheck');
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.id; // จาก middleware auth
@@ -115,6 +115,30 @@ exports.getOrderStats = async (req, res) => {
   } catch (err) {
     console.error("getOrderStats error:", err);
     res.status(500).json({ error: "ไม่สามารถดึงสถิติได้" });
+  }
+};
+
+exports.updateTrackingNumber = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { trackingNumber } = req.body;
+
+    if (!trackingNumber || trackingNumber.trim() === "") {
+      return res.status(400).json({ message: 'Tracking number is required' });
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: parseInt(orderId) },
+      data: { trackingNumber: trackingNumber }
+    });
+
+    res.status(200).json({
+      message: 'Tracking number updated successfully',
+      order: updatedOrder
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 

@@ -56,10 +56,10 @@ const CartCard = () => {
                     <div className="flex gap-4 items-start w-full">
                         {/* Product Image */}
                         <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                            {item.carges && item.carges.length > 0 ? (
+                            {item.images && item.images.length > 0 ? (
                             <img
                                 className="w-full h-full object-cover"
-                                src={item.carges[0].url}
+                                src={item.images[0].url}
                                 alt={item.title}
                             />
                             ) : (

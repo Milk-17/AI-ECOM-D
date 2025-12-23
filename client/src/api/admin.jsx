@@ -66,3 +66,15 @@ export const getAdminLogs = async (token) => {
     },
   });
 };
+
+export const updateTrackingNumber = async (token, orderId, trackingNumber) => {
+  return await axios.put(
+    `http://localhost:5001/api/order/tracking/${orderId}`,
+    { trackingNumber },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+};

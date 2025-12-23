@@ -9,8 +9,8 @@ exports.listUsers = async (req,res) => {
                 email:true,
                 role:true,
                 enable:true,
-                // address:true, // ❌ ลบออก เพราะไม่มี field นี้แล้วในตาราง User
-                addresses: true, // ✅ เพิ่มอันนี้แทน เพื่อดูรายการที่อยู่ (Relation)
+                // address:true, //  ลบออก เพราะไม่มี field นี้แล้วในตาราง User
+                addresses: true, //  เพิ่มอันนี้แทน เพื่อดูรายการที่อยู่ (Relation)
                 updatedAt: true
             }
         })
@@ -176,103 +176,134 @@ exports.emptyCart = async (req,res) => {
 
 // ================= USER : Address System (NEW) =================
 
-// 1. เพิ่มที่อยู่ใหม่ (Create)
+// 1. เพิ่มที่อยู่ใหม่ (Create) - ป้องกันซ้ำ
 exports.saveAddress = async (req,res) => {
-    try{
-        const { addrDetail, province, district, subDistrict, zipcode, recipient, phone, isMain } = req.body
-        
-        // ถ้า User เลือกเป็นที่อยู่หลัก -> ให้ไปเคลียร์ที่อยู่อื่นๆ ให้เป็น false ก่อน
-        if (isMain) {
-            await prisma.address.updateMany({
-                where: { userId: req.user.id },
-                data: { isMain: false }
-            });
-        }
+  try{
+      // 1. รับค่าและตัดช่องว่าง (Trim) เพื่อความแม่นยำ
+      const { addrDetail, province, district, subDistrict, zipcode, recipient, phone, isMain } = req.body
 
-        const address = await prisma.address.create({
-            data:{
-                addrDetail,
-                province,
-                district,
-                subDistrict,
-                zipcode,
-                recipient,
-                phone,
-                isMain: isMain || false,
-                userId: req.user.id
-            }
-        })
+      const cleanAddrDetail = addrDetail?.trim();
+      const cleanProvince = province?.trim();
+      const cleanDistrict = district?.trim();
+      const cleanSubDistrict = subDistrict?.trim();
+      const cleanZipcode = zipcode?.trim();
 
-        res.json({ ok: true, message: "Address created success" })
 
-    } catch (err) {
-        console.log(err)
-        res.status(500).json({ message: "saveAddress Error"})
-    }
+      // 2. เช็คซ้ำ (ใช้ค่าที่ Trim แล้ว)
+      const existingAddress = await prisma.address.findFirst({
+          where: {
+              userId: req.user.id,
+              addrDetail: cleanAddrDetail,
+              province: cleanProvince,
+              district: cleanDistrict,
+              subDistrict: cleanSubDistrict,
+              zipcode: cleanZipcode
+          }
+      });
+
+      if (existingAddress) {
+          return res.status(400).json({ ok: false, message: "ที่อยู่นี้มีอยู่ในระบบแล้วครับ (ซ้ำ)" });
+      }
+
+      // 3. ถ้าเป็น Main ให้เคลียร์อันอื่น
+      if (isMain) {
+          await prisma.address.updateMany({
+              where: { userId: req.user.id },
+              data: { isMain: false }
+          });
+      }
+
+      // 4. บันทึก (ใช้ค่าที่ Trim แล้ว)
+      const address = await prisma.address.create({
+          data:{
+              addrDetail: cleanAddrDetail,
+              province: cleanProvince,
+              district: cleanDistrict,
+              subDistrict: cleanSubDistrict,
+              zipcode: cleanZipcode,
+              recipient: recipient?.trim(),
+              phone: phone?.trim(),
+              isMain: isMain || false,
+              userId: req.user.id
+          }
+      })
+
+      res.json({ ok: true, message: "เพิ่มที่อยู่เรียบร้อยแล้ว" })
+
+  } catch (err) {
+      console.log(err)
+      res.status(500).json({ message: "saveAddress Error"})
+  }
 }
 
-// 2. ดึงรายการที่อยู่ (Read)
+// 2. ดึงรายการที่อยู่ (Read) - (เหมือนเดิม)
 exports.getAddresses = async (req, res) => {
-    try {
-        const addresses = await prisma.address.findMany({
-            where: { userId: req.user.id },
-            orderBy: { createdAt: 'desc' }
-        });
-        res.json(addresses);
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: "Server Error" });
-    }
+  try {
+      const addresses = await prisma.address.findMany({
+          where: { userId: req.user.id },
+          orderBy: { createdAt: 'desc' }
+      });
+      res.json(addresses);
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Server Error" });
+  }
 };
 
 // 3. แก้ไขที่อยู่ (Update)
 exports.updateAddress = async (req, res) => {
-    try {
-        const { addressId, isMain, ...otherData } = req.body;
-        
-        // ถ้าจะตั้งเป็น Main ให้เคลียร์อันอื่นก่อน
-        if (isMain) {
-            await prisma.address.updateMany({
-                where: { userId: req.user.id },
-                data: { isMain: false }
-            });
-        }
+  try {
+      const { addressId, isMain, ...otherData } = req.body;
 
-        const address = await prisma.address.update({
-            where: { 
-                id: Number(addressId),
-                userId: req.user.id 
-            },
-            data: {
-                ...otherData,
-                isMain: isMain
-            }
-        });
+      // Validation ID
+      if (!addressId) {
+          return res.status(400).json({ message: "Address ID is required" });
+      }
 
-        res.json({ ok: true, message: "Address updated success" });
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: "Server Error" });
-    }
+      // ถ้าจะตั้งเป็น Main ให้เคลียร์อันอื่นก่อน
+      if (isMain) {
+          await prisma.address.updateMany({
+              where: { userId: req.user.id },
+              data: { isMain: false }
+          });
+      }
+
+      // อัปเดตข้อมูล (ใช้ userId เพื่อความปลอดภัย กันแก้ของคนอื่น)
+      const address = await prisma.address.update({
+          where: {
+              id: Number(addressId),
+              userId: req.user.id 
+          },
+          data: {
+              ...otherData,
+              isMain: isMain
+          }
+      });
+
+      res.json({ ok: true, message: "แก้ไขที่อยู่เรียบร้อยแล้ว" });
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Server Error Update Address" });
+  }
 };
 
-// 4. ลบที่อยู่ (Delete)
+// 4. ลบที่อยู่ (Delete) - (เหมือนเดิม)
 exports.deleteAddress = async (req, res) => {
-    try {
-        const { id } = req.params; // รับ id จาก params
+  try {
+      const { id } = req.params;
 
-        await prisma.address.delete({
-            where: { 
-                id: Number(id),
-                userId: req.user.id // เช็คว่าเป็นของ User คนนี้จริงไหม
-            }
-        });
+      await prisma.address.delete({
+          where: {
+              id: Number(id),
+              userId: req.user.id
+          }
+      });
 
-        res.json({ ok: true, message: "Address deleted success" });
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: "Server Error" });
-    }
+      res.json({ ok: true, message: "ลบที่อยู่เรียบร้อยแล้ว" });
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Server Error" });
+  }
 };
 
 // ================= USER : Order System (UPDATED) =================

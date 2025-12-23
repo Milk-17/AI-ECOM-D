@@ -5,20 +5,24 @@ import { toast } from "react-toastify";
 import Uploadfile from "./Uploadfile";
 import { Link } from "react-router-dom";
 import {
-  PencilOff,
-  Delete,
-  Box,
+  Pencil,
+  Trash2,
+  Package,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react"; // เพิ่ม Icon ลูกศร
+  Search,
+  Plus,
+  Filter,
+  XCircle,
+  AlertCircle,
+  CheckCircle2,
+  ImageIcon
+} from "lucide-react"; 
 import { numberFormat } from "../../utils/number";
-
-// Import Header
-import ProductFilterHeader from "./ProductFilterHeader";
 
 const initialState = {
   title: "",
-  description: {}, // เปลี่ยนจาก string เป็น object
+  description: {}, 
   price: 0,
   quantity: 0,
   categoryId: "",
@@ -31,27 +35,30 @@ const FormProduct = () => {
   const getProduct = useEcomStore((state) => state.getProduct);
   const products = useEcomStore((state) => state.products);
   const getCategory = useEcomStore((state) => state.getCategory);
-
-  const [form, setForm] = useState(initialState);
-  const [selectedMainId, setSelectedMainId] = useState("");
-  const [specKey, setSpecKey] = useState(""); // key สำหรับ specification
-  const [specValue, setSpecValue] = useState(""); // value สำหรับ specification
-
   const actionDeleteProduct = useEcomStore((state) => state.actionDeleteProduct);
 
-  // --- Filter State ---
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [form, setForm] = useState(initialState);
+  
+  // State สำหรับ Form (ตอนเพิ่มสินค้า)
+  const [formMainCatId, setFormMainCatId] = useState("");
+  const [specKey, setSpecKey] = useState(""); 
+  const [specValue, setSpecValue] = useState(""); 
 
-  // --- Pagination State (เพิ่มใหม่) ---
+  // --- Filter State (แก้ไขใหม่ แยก Main/Sub) ---
+  const [search, setSearch] = useState("");
+  const [filterMainCatId, setFilterMainCatId] = useState("");
+  const [filterSubCatId, setFilterSubCatId] = useState("");
+
+  // --- Pagination State ---
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // แสดงหน้าละ 10 รายการ (แก้เลขตรงนี้ได้)
+  const [itemsPerPage] = useState(10); 
+
   useEffect(() => {
     getCategory(token);
-    // สินค้า 300-500 ชิ้น โหลดมาทีเดียวไหวครับ (ใส่ 1000 เผื่อไว้เลย)
-    getProduct(1000);
+    getProduct(1000); // Load เยอะหน่อยเผื่อ Filter
   }, [getCategory, getProduct, token]);
 
+  // --- Handle Form Input ---
   const handleOnChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -59,53 +66,43 @@ const FormProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.categoryId) {
-      toast.error("กรุณาเลือก SubCategory");
+      toast.warning("กรุณาเลือกหมวดหมู่ย่อย (Please select SubCategory)");
       return;
     }
     if (form.price < 0 || form.quantity < 0) {
-      toast.warning("ราคาและจำนวนต้องไม่ติดลบ");
+      toast.warning("ราคาและจำนวนต้องไม่ติดลบ (Price/Qty must be positive)");
       return;
     }
 
     try {
       const res = await createProduct(token, form);
       const productTitle = res.data?.product?.title || form.title;
-      toast.success(`เพิ่มสินค้า ${productTitle} เรียบร้อย`);
-      // Reset form ให้กลับมาเป็นค่า initial
-      setForm({
-        title: "",
-        description: {},
-        price: 0,
-        quantity: 0,
-        categoryId: "",
-        images: [],
-      });
+      toast.success(`เพิ่มสินค้า ${productTitle} เรียบร้อย (Success)`);
+      
+      // Reset form
+      setForm({ ...initialState });
       setSpecKey("");
       setSpecValue("");
+      setFormMainCatId("");
       getProduct(1000);
-      setSelectedMainId("");
     } catch (err) {
       const errMsg = err.response?.data?.message || "Something went wrong";
       toast.error(errMsg);
     }
   };
 
-  // ฟังก์ชันสำหรับเพิ่ม specification
+  // --- Spec Functions ---
   const handleAddSpec = () => {
     if (specKey.trim() && specValue.trim()) {
       setForm({
         ...form,
-        description: {
-          ...form.description,
-          [specKey]: specValue,
-        },
+        description: { ...form.description, [specKey]: specValue },
       });
       setSpecKey("");
       setSpecValue("");
     }
   };
 
-  // ฟังก์ชันสำหรับลบ specification
   const handleRemoveSpec = (key) => {
     const newDesc = { ...form.description };
     delete newDesc[key];
@@ -113,387 +110,399 @@ const FormProduct = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("คุณแน่ใจหรือไม่ที่จะลบสินค้านี้?")) {
+    if (window.confirm("ยืนยันการลบสินค้า? (Confirm Delete?)")) {
       try {
-        const res = await deleteProduct(token, id);
-        console.log(res);
-        toast.success("ลบสินค้าเรียบร้อยแล้ว");
-        await getProduct(1000);
+        await deleteProduct(token, id);
+        toast.success("ลบสินค้าเรียบร้อย (Deleted)");
         actionDeleteProduct(id);
       } catch (err) {
         console.log(err);
+        toast.error("ลบไม่สำเร็จ (Delete Failed)");
       }
     }
   };
 
-  // --- Logic การกรองข้อมูล ---
+  // --- Logic การกรองข้อมูล (New Filter System) ---
   const filteredProducts = products.filter((item) => {
-    const matchesSearch = item.title
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesCategory = categoryFilter
-      ? item.categoryId === Number(categoryFilter) ||
-        item.subCategoryId === Number(categoryFilter)
-      : true;
+    // 1. Search Text
+    const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
+    
+    // 2. Category Logic
+    let matchesCategory = true;
+
+    if (filterSubCatId) {
+        // ถ้าเลือก Sub Category -> ต้องตรงเป๊ะๆ
+        matchesCategory = item.categoryId === Number(filterSubCatId);
+    } else if (filterMainCatId) {
+        // ถ้าเลือกแค่ Main Category -> ต้องหาว่าสินค้าอยู่ใน Sub ไหนของ Main นี้บ้าง
+        const mainCat = categories.find(c => c.id === Number(filterMainCatId));
+        if (mainCat && mainCat.subCategories) {
+            const subCatIds = mainCat.subCategories.map(s => s.id);
+            matchesCategory = subCatIds.includes(item.categoryId);
+        } else {
+            matchesCategory = false;
+        }
+    }
+
     return matchesSearch && matchesCategory;
   });
 
-  // --- Logic การแบ่งหน้า (Pagination) ---
+  // --- Pagination Logic ---
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProducts = filteredProducts.slice(
-    indexOfFirstItem,
-    indexOfLastItem
-  );
+  const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  // เมื่อมีการค้นหา ให้กลับไปหน้า 1 เสมอ
+  // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, categoryFilter]);
+  }, [search, filterMainCatId, filterSubCatId]);
 
-  const selectedMainCategory = categories.find(
-    (cat) => cat.id === Number(selectedMainId)
-  );
-  const subCategories = selectedMainCategory?.subCategories || [];
+  // --- Helpers ---
+  // สำหรับ Form (Create)
+  const formMainCategory = categories.find(cat => cat.id === Number(formMainCatId));
+  const formSubCategories = formMainCategory?.subCategories || [];
 
-  const getStockStatus = (quantity) => {
-    if (quantity === 0) {
-      return (
-        <span className="text-red-600 font-bold bg-red-100 px-2 py-1 rounded-full text-xs border border-red-200">
-          สินค้าหมด!
-        </span>
-      );
-    } else if (quantity < 8) {
-      return (
-        <span className="text-orange-600 font-bold bg-orange-100 px-2 py-1 rounded-full text-xs border border-orange-200">
-          ใกล้หมด! ({quantity})
-        </span>
-      );
-    }
-    return <span className="text-gray-700 font-medium">{quantity}</span>;
-  };
+  // สำหรับ Filter (Search)
+  const filterMainCategory = categories.find(cat => cat.id === Number(filterMainCatId));
+  const filterSubCategories = filterMainCategory?.subCategories || [];
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("th-TH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      year: "numeric", month: "short", day: "numeric",
     });
   };
 
   return (
-    <div className="container mx-auto p-6 bg-white shadow-lg rounded-lg border border-gray-200">
-      {/* --- FORM SECTION (เหมือนเดิม) --- */}
-      <form onSubmit={handleSubmit} className="flex flex-col space-y-6 mb-10">
-        <div className="flex items-center gap-2 border-b pb-4">
-          <Box className="text-blue-600" size={28} />
-          <h1 className="text-2xl font-bold text-gray-800">
-            จัดการสินค้า (Product Management)
-          </h1>
+    <div className="container mx-auto px-4 py-8">
+      
+      {/* ----------------- SECTION 1: FORM เพิ่มสินค้า ----------------- */}
+      <div className="bg-white shadow-md rounded-xl overflow-hidden border border-gray-100 mb-8">
+        <div className="bg-blue-600 p-4 flex items-center gap-3 text-white">
+            <Package size={24} />
+            <h1 className="text-xl font-bold">เพิ่มสินค้าใหม่ (Add New Product)</h1>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              ชื่อสินค้า
-            </label>
-            <input
-              className="border border-gray-300 p-2.5 rounded-md w-full focus:ring-2 focus:ring-blue-500 outline-none transition"
-              onChange={handleOnChange}
-              value={form.title}
-              name="title"
-              placeholder="Product Title"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              ราคา (บาท)
-            </label>
-            <input
-              className="border border-gray-300 p-2.5 rounded-md w-full focus:ring-2 focus:ring-blue-500 outline-none transition"
-              type="number"
-              onChange={handleOnChange}
-              value={form.price}
-              name="price"
-              placeholder="0.00"
-              min="0"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              จำนวน (ชิ้น)
-            </label>
-            <input
-              className="border border-gray-300 p-2.5 rounded-md w-full focus:ring-2 focus:ring-blue-500 outline-none transition"
-              type="number"
-              onChange={handleOnChange}
-              value={form.quantity}
-              name="quantity"
-              placeholder="0"
-              min="0"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              หมวดหมู่หลัก
-            </label>
-            <select
-              className="border border-gray-300 p-2.5 rounded-md w-full focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer"
-              value={selectedMainId}
-              onChange={(e) => {
-                setSelectedMainId(e.target.value);
-                setForm({ ...form, categoryId: "" });
-              }}
-              required
-            >
-              <option value="">-- เลือก Main Category --</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              หมวดหมู่ย่อย
-            </label>
-            <select
-              className="border border-gray-300 p-2.5 rounded-md w-full focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer disabled:bg-gray-100"
-              value={form.categoryId}
-              name="categoryId"
-              onChange={handleOnChange}
-              disabled={!selectedMainId}
-              required
-            >
-              <option value="">-- เลือก SubCategory --</option>
-              {subCategories.map((sub) => (
-                <option key={sub.id} value={sub.id}>
-                  {sub.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="space-y-2 border-t pt-4">
-          <label className="block text-sm font-medium text-gray-700">
-            รายละเอียด (Specifications)
-          </label>
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <input
-                className="border border-gray-300 p-2.5 rounded-md flex-1 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="เช่น Brand, Model, Socket..."
-                value={specKey}
-                onChange={(e) => setSpecKey(e.target.value)}
-              />
-              <input
-                className="border border-gray-300 p-2.5 rounded-md flex-1 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="เช่น AMD, RYZEN 7 9800X3D..."
-                value={specValue}
-                onChange={(e) => setSpecValue(e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={handleAddSpec}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-              >
-                เพิ่ม
-              </button>
-            </div>
-            
-            {/* แสดงรายการ specifications ที่เพิ่มแล้ว */}
-            {Object.keys(form.description).length > 0 && (
-              <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
-                <div className="text-sm font-semibold text-gray-700 mb-2">
-                  Specifications ที่เพิ่มแล้ว:
+        <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                
+                {/* Product Name */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อสินค้า (Product Name)</label>
+                    <input
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none transition"
+                        onChange={handleOnChange}
+                        value={form.title}
+                        name="title"
+                        placeholder="Ex. Gaming Mouse Logitech G Pro..."
+                        required
+                    />
                 </div>
-                <div className="space-y-2">
-                  {Object.entries(form.description).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="flex justify-between items-center bg-white p-2 rounded border border-gray-200"
-                    >
-                      <span className="text-sm text-gray-700">
-                        <strong>{key}:</strong> {value}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSpec(key)}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium"
-                      >
-                        ลบ
-                      </button>
+
+                {/* Price & Qty */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">ราคา (Price)</label>
+                        <input
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none transition"
+                            type="number"
+                            onChange={handleOnChange}
+                            value={form.price}
+                            name="price"
+                            min="0"
+                            required
+                        />
                     </div>
-                  ))}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">จำนวนคงเหลือ (Quantity)</label>
+                        <input
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none transition"
+                            type="number"
+                            onChange={handleOnChange}
+                            value={form.quantity}
+                            name="quantity"
+                            min="0"
+                            required
+                        />
+                    </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
 
-        <div className="border-t pt-4">
-          <Uploadfile form={form} setForm={setForm} />
-        </div>
-
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 font-bold w-full md:w-auto self-end flex items-center justify-center gap-2">
-          <Box size={20} /> เพิ่มสินค้าเข้าระบบ
-        </button>
-      </form>
-
-      {/* --- FILTER SECTION --- */}
-      <ProductFilterHeader
-        search={search}
-        setSearch={setSearch}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
-        categories={categories}
-        handleReset={() => {
-          setSearch("");
-          setCategoryFilter("");
-        }}
-      />
-
-      {/* --- TABLE SECTION --- */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200 mb-4">
-        <table className="w-full text-left border-collapse table-fixed">
-          <thead className="bg-gray-100 text-gray-700 uppercase text-xs font-bold">
-            <tr>
-              <th className="p-4 border-b text-center w-[5%]">No.</th>
-              <th className="p-4 border-b text-center w-[10%]">รูปภาพ</th>
-              <th className="p-4 border-b text-left w-[25%]">ชื่อสินค้า</th>
-              <th className="p-4 border-b text-right w-[10%]">ราคา</th>
-              <th className="p-4 border-b text-center w-[15%]">จำนวน</th>
-              <th className="p-4 border-b text-center w-[10%]">ขายได้</th>
-              <th className="p-4 border-b text-center w-[15%]">อัพเดท</th>
-              <th className="p-4 border-b text-center w-[10%]">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody className="text-sm text-gray-600">
-            {currentProducts.length > 0 ? (
-              currentProducts.map((item, index) => {
-                // คำนวณลำดับจริง (เพราะเราแบ่งหน้า)
-                const realIndex = indexOfFirstItem + index + 1;
-                const isLowStock = item.quantity > 0 && item.quantity < 8;
-                const isOutOfStock = item.quantity === 0;
-
-                return (
-                  <tr
-                    key={index}
-                    className={`border-b last:border-0 hover:bg-gray-50 transition duration-150 ${
-                      isOutOfStock ? "bg-red-50" : ""
-                    } ${isLowStock ? "bg-yellow-50" : ""}`}
-                  >
-                    <td className="p-3 text-center align-middle">
-                      {realIndex}
-                    </td>
-                    <td className="p-3 text-center align-middle">
-                      <div className="flex justify-center">
-                        {item.carges && item.carges.length > 0 ? (
-                          <img
-                            className="w-12 h-12 rounded-md shadow-sm object-cover border border-gray-200"
-                            src={item.carges[0].url}
-                            alt={item.title}
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500">
-                            No Pic
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-3 align-middle">
-                      <div
-                        className="font-medium text-gray-800 truncate"
-                        title={item.title}
-                      >
-                        {item.title}
-                      </div>
-                    </td>
-                    <td className="p-3 text-right align-middle font-mono font-semibold text-gray-700">
-                      {numberFormat(item.price)}
-                    </td>
-                    <td className="p-3 text-center align-middle">
-                      {getStockStatus(item.quantity)}
-                    </td>
-                    <td className="p-3 text-center align-middle font-medium">
-                      {item.sold}
-                    </td>
-                    <td className="p-3 text-center align-middle text-xs whitespace-nowrap">
-                      {formatDate(item.updatedAt)}
-                    </td>
-                    <td className="p-3 text-center align-middle">
-                      <div className="flex justify-center gap-2">
-                        <Link
-                          to={`/admin/product/${item.id}`}
-                          className="bg-yellow-100 text-yellow-600 p-2 rounded-md hover:bg-yellow-200 transition shadow-sm border border-yellow-200"
-                          title="แก้ไข"
+                {/* Categories (Create Form) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่หลัก (Main Category)</label>
+                        <select
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white focus:outline-none"
+                            value={formMainCatId}
+                            onChange={(e) => {
+                                setFormMainCatId(e.target.value);
+                                setForm({ ...form, categoryId: "" }); // Reset sub when main changes
+                            }}
+                            required
                         >
-                          <PencilOff size={16} />
-                        </Link>
+                            <option value="">-- เลือกหมวดหมู่หลัก --</option>
+                            {categories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่ย่อย (Sub Category)</label>
+                        <select
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white focus:outline-none disabled:bg-gray-200 disabled:cursor-not-allowed"
+                            value={form.categoryId}
+                            name="categoryId"
+                            onChange={handleOnChange}
+                            disabled={!formMainCatId}
+                            required
+                        >
+                            <option value="">-- เลือกหมวดหมู่ย่อย --</option>
+                            {formSubCategories.map((sub) => (
+                                <option key={sub.id} value={sub.id}>{sub.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                {/* Specifications */}
+                <div className="border-t pt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">คุณสมบัติเพิ่มเติม (Specifications)</label>
+                    <div className="flex gap-2 mb-3">
+                        <input
+                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                            placeholder="หัวข้อ (Ex. CPU)"
+                            value={specKey}
+                            onChange={(e) => setSpecKey(e.target.value)}
+                        />
+                        <input
+                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                            placeholder="รายละเอียด (Ex. Intel i9)"
+                            value={specValue}
+                            onChange={(e) => setSpecValue(e.target.value)}
+                        />
                         <button
-                          className="bg-red-100 text-red-600 p-2 rounded-md hover:bg-red-200 transition shadow-sm border border-red-200"
-                          onClick={() => handleDelete(item.id)}
-                          title="ลบสินค้า"
+                            type="button"
+                            onClick={handleAddSpec}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
                         >
-                          <Delete size={16} />
+                            <Plus size={18}/>
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td
-                  colSpan="8"
-                  className="p-8 text-center text-gray-500 bg-gray-50"
-                >
-                  ไม่พบสินค้าที่ค้นหา
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                    </div>
+                    
+                    {/* Spec Tags */}
+                    <div className="flex flex-wrap gap-2">
+                        {Object.entries(form.description).map(([key, value]) => (
+                            <span key={key} className="inline-flex items-center gap-1 bg-gray-100 border border-gray-300 px-2 py-1 rounded text-xs font-medium text-gray-700">
+                                {key}: {value}
+                                <XCircle 
+                                    size={14} 
+                                    className="cursor-pointer text-gray-400 hover:text-red-500" 
+                                    onClick={() => handleRemoveSpec(key)}
+                                />
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Upload Image */}
+                <div className="border-t pt-4">
+                     <Uploadfile form={form} setForm={setForm} />
+                </div>
+
+                <button className="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-emerald-700 transition flex justify-center items-center gap-2">
+                    <CheckCircle2 size={20} /> บันทึกสินค้า (Save Product)
+                </button>
+            </form>
+        </div>
       </div>
 
-      {/* --- PAGINATION CONTROLS (ส่วนปุ่มกดเปลี่ยนหน้า) --- */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="p-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft size={20} />
-          </button>
+      {/* ----------------- SECTION 2: SEARCH & FILTER (แก้ไขใหม่) ----------------- */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            
+            {/* Search */}
+            <div className="relative w-full md:w-1/3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input 
+                    type="text"
+                    placeholder="ค้นหาชื่อสินค้า..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+            </div>
 
-          <span className="text-sm font-medium text-gray-700">
-            หน้า {currentPage} จาก {totalPages}
-          </span>
+            {/* Category Filters */}
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-2/3 justify-end">
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <Filter size={18} className="text-gray-500" />
+                    <select 
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none w-full md:w-48 cursor-pointer"
+                        value={filterMainCatId}
+                        onChange={(e) => {
+                            setFilterMainCatId(e.target.value);
+                            setFilterSubCatId(""); // Reset sub when main filter changes
+                        }}
+                    >
+                        <option value="">ทั้งหมด (All Main)</option>
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                </div>
 
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="p-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronRight size={20} />
-          </button>
+                <select 
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none w-full md:w-48 cursor-pointer disabled:bg-gray-100 disabled:text-gray-400"
+                    value={filterSubCatId}
+                    onChange={(e) => setFilterSubCatId(e.target.value)}
+                    disabled={!filterMainCatId} // ปิดถ้ายังไม่เลือก Main
+                >
+                    <option value="">ทั้งหมด (All Sub)</option>
+                    {filterSubCategories.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+
+                {/* Reset Button */}
+                {(search || filterMainCatId) && (
+                    <button 
+                        onClick={() => {
+                            setSearch("");
+                            setFilterMainCatId("");
+                            setFilterSubCatId("");
+                        }}
+                        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 text-sm font-bold"
+                    >
+                        Clear
+                    </button>
+                )}
+            </div>
         </div>
-      )}
+      </div>
+
+      {/* ----------------- SECTION 3: TABLE ----------------- */}
+      <div className="bg-white shadow-md rounded-xl overflow-hidden border border-gray-200">
+        <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold tracking-wider">
+                    <tr>
+                        <th className="p-4 text-center w-16">No.</th>
+                        <th className="p-4 text-center w-24">Image</th>
+                        <th className="p-4">สินค้า (Product Details)</th>
+                        <th className="p-4 text-center">ราคา (Price)</th>
+                        <th className="p-4 text-center">คลัง (Stock)</th>
+                        <th className="p-4 text-center">ขายแล้ว (Sold)</th>
+                        <th className="p-4 text-right">อัพเดท (Updated)</th>
+                        <th className="p-4 text-center">จัดการ (Actions)</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                    {currentProducts.length > 0 ? currentProducts.map((item, index) => {
+                         const realIndex = indexOfFirstItem + index + 1;
+                         const isOutOfStock = item.quantity === 0;
+                         const isLowStock = item.quantity > 0 && item.quantity < 10;
+
+                         return (
+                            <tr key={item.id} className="hover:bg-gray-50 transition duration-150 group">
+                                <td className="p-4 text-center text-gray-400 text-xs">{realIndex}</td>
+                                
+                                {/* Image */}
+                                <td className="p-4 text-center">
+                                    <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden mx-auto">
+                                        {item.images && item.images.length > 0 ? (
+                                            <img src={item.images[0].url} alt={item.title} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <ImageIcon size={20} className="text-gray-400" />
+                                        )}
+                                    </div>
+                                </td>
+
+                                {/* Product Name */}
+                                <td className="p-4">
+                                    <p className="font-bold text-gray-800 line-clamp-1" title={item.title}>{item.title}</p>
+                                    <p className="text-xs text-gray-400">ID: {item.id}</p>
+                                </td>
+
+                                {/* Price */}
+                                <td className="p-4 text-center font-mono font-medium text-blue-600">
+                                    {numberFormat(item.price)}
+                                </td>
+
+                                {/* Stock Status */}
+                                <td className="p-4 text-center">
+                                    {isOutOfStock ? (
+                                        <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 px-2 py-1 rounded-full text-xs font-bold border border-red-100">
+                                            <AlertCircle size={12}/> หมด (Out)
+                                        </span>
+                                    ) : isLowStock ? (
+                                        <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-600 px-2 py-1 rounded-full text-xs font-bold border border-orange-100">
+                                            ต่ำ ({item.quantity})
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-600 text-sm">{item.quantity}</span>
+                                    )}
+                                </td>
+
+                                {/* Sold */}
+                                <td className="p-4 text-center text-sm text-gray-600">{item.sold}</td>
+
+                                {/* Date */}
+                                <td className="p-4 text-right text-xs text-gray-500">
+                                    {formatDate(item.updatedAt)}
+                                </td>
+
+                                {/* Actions */}
+                                <td className="p-4 text-center">
+                                    <div className="flex justify-center gap-2">
+                                        <Link 
+                                            to={`/admin/product/${item.id}`}
+                                            className="p-2 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition shadow-sm"
+                                            title="Edit"
+                                        >
+                                            <Pencil size={16} />
+                                        </Link>
+                                        <button 
+                                            onClick={() => handleDelete(item.id)}
+                                            className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition shadow-sm"
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                         )
+                    }) : (
+                        <tr>
+                            <td colSpan="8" className="p-10 text-center text-gray-400">
+                                <Package size={48} className="mx-auto mb-2 opacity-20"/>
+                                <p>ไม่พบสินค้า (No Products Found)</p>
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+            <div className="p-4 border-t border-gray-100 flex justify-center items-center gap-4 bg-gray-50">
+                <button 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                >
+                    <ChevronLeft size={16}/>
+                </button>
+                <span className="text-sm font-medium text-gray-600">
+                    หน้า {currentPage} / {totalPages}
+                </span>
+                <button 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                >
+                    <ChevronRight size={16}/>
+                </button>
+            </div>
+        )}
+      </div>
     </div>
   );
 };

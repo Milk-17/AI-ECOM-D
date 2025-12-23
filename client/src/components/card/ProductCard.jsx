@@ -28,10 +28,10 @@ const ProductCard = ({ item, showTitle = true, }) => {
             
             {/* รูปภาพ: ล็อคความสูง (h-48) เพื่อให้รูปเท่ากันทุกใบ */}
             <div className="w-full h-48 overflow-hidden rounded-md relative bg-gray-200"> 
-                {item.carges && item.carges.length > 0 ? (
+                {item.images && item.images.length > 0 ? (
                     <Link to={`/product/${item.id}`} className="w-full h-full block">
                         <img
-                            src={item.carges[0].url}
+                            src={item.images[0].url}
                             alt={item.title}
                             className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                         />

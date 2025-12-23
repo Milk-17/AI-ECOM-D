@@ -44,7 +44,7 @@ exports.create = async (req, res) => {
                 categoryId: subCategoryInfo.categoryId, // ใส่ ID พ่อ (ที่หาเจอจาก Database)
                 subCategoryId: subCatId,                // ใส่ ID ลูก (ที่ส่งมาจาก Frontend)
                 // ***********************
-                carges: {
+                images: {
                     create: images.map(item => ({
                         asset_id: item.asset_id,
                         public_id: item.public_id,
@@ -98,7 +98,7 @@ exports.list = async(req,res) =>{
             include: {
                 category: true,
                 subCategory: true,
-                carges: true
+                images: true
             } 
         });
         res.send(products);
@@ -118,7 +118,7 @@ exports.read = async(req,res) =>{
             include: {
                 category: true,
                 subCategory: true,
-                carges: true
+                images: true
             } 
         });
         res.send(product);
@@ -190,7 +190,7 @@ exports.update = async (req, res) => {
                 subCategoryId: subCatId,
                 // เพิ่มรูปใหม่ได้เฉพาะกรณีที่มี images
                 ...(images && images.length > 0 && {
-                    carges: {
+                    images: {
                         create: images.map((item) => ({
                             asset_id: item.asset_id,
                             public_id: item.public_id,
@@ -216,7 +216,7 @@ exports.remove = async(req,res) => {
 
         const product = await prisma.product.findUnique({
             where : { id: Number(id) },
-            include: { carges: true }
+            include: { images: true }
         });
 
         if (!product){
@@ -224,7 +224,7 @@ exports.remove = async(req,res) => {
         }
 
         // ลบรูปใน Cloudinary
-        const deleteImage = product.carges.map((image) =>
+        const deleteImage = product.images.map((image) =>
             new Promise((resolve,reject) =>{
                 cloudinary.uploader.destroy(image.public_id,(error,result) =>{
                     if (error) reject(error);
@@ -370,7 +370,7 @@ exports.listby = async (req, res) => {
       const products = await prisma.product.findMany({
         take: Number(limit),
         orderBy: { [sortField]: sortOrder },
-        include: { carges: true, category: true, subCategory: true },
+        include: { images: true, category: true, subCategory: true },
       });
   
       res.send(products);

@@ -45,6 +45,18 @@ const SidebarAdmin = () => {
         </NavLink>
 
         <NavLink
+          to={"AdminDashboard"}
+          className={({ isActive }) =>
+            isActive
+              ? "bg-gray-900 text-white px-4 py-3 rounded-md flex items-center shadow-sm transition-colors"
+              : "text-gray-300 px-4 py-3 hover:bg-gray-700 hover:text-white rounded-md flex items-center transition-colors"
+          }
+        >
+          <UserCog className="mr-3" size={20} />
+          Admin Dashboard
+        </NavLink>
+
+        <NavLink
           to={"manage"}
           className={({ isActive }) =>
             isActive

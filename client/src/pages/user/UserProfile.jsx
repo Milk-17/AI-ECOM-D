@@ -154,12 +154,7 @@ const UserProfile = () => {
               </div>
             </div>
             <h2 className="text-xl font-bold text-gray-800">{userData.name || "User"}</h2>
-            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full mt-2 capitalize">
-              {userData.role}
-            </span>
-            <p className="text-xs text-gray-400 mt-4">
-               อัปเดตล่าสุด: {userData.updatedAt ? moment(userData.updatedAt).format('DD MMM YYYY') : '-'}
-            </p>
+
           </div>
         </div>
 
@@ -169,7 +164,7 @@ const UserProfile = () => {
             {/* --- Card 2: รายละเอียดบัญชี --- */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                 <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <h3 className="text-lg font-semibold text-gray-700">รายละเอียดบัญชี</h3>
+                    <h3 className="text-lg font-semibold text-gray-700">รายละเอียดบัญช (Account details)</h3>
                     <button 
                         onClick={() => setIsEditing(!isEditing)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
@@ -183,7 +178,7 @@ const UserProfile = () => {
                     {/* ส่วนเลือก Avatar (ซ่อน/แสดง) */}
                     {isEditing && (
                         <div className="mb-6 animate-fade-in bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <label className="block text-sm font-medium text-gray-700 mb-3 text-center">เลือกรูปโปรไฟล์ใหม่</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-3 text-center">เลือกรูปโปรไฟล์ใหม่ (Choose a new profile picture )</label>
                             <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 justify-items-center">
                                 {avatars.map((url, idx) => (
                                     <div 
@@ -202,7 +197,7 @@ const UserProfile = () => {
 
                     {/* Form Profile */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อที่แสดง</label>
+                        
                         {isEditing ? (
                             <input name="name" value={userData.name} onChange={handleChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none transition"/>
                         ) : (
@@ -231,7 +226,7 @@ const UserProfile = () => {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                  <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
-                        <Lock size={20} className="text-gray-400"/> ความปลอดภัยและรหัสผ่าน
+                        <Lock size={20} className="text-gray-400"/> ความปลอดภัยและรหัสผ่าน (Security and password)
                     </h3>
                     <button 
                         onClick={() => setIsChangePassword(!isChangePassword)}
