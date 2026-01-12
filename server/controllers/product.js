@@ -1,5 +1,5 @@
 const prisma = require("../config/prisma");
-const cloudinary  = require('cloudinary').v2;
+const cloudinary = require('cloudinary').v2;
 
 // Configuration
 cloudinary.config({ 
@@ -11,9 +11,8 @@ cloudinary.config({
 // ===================== CREATE PRODUCT =====================
 exports.create = async (req, res) => {
     try {
-        // รับค่าจาก Frontend
-        // หมายเหตุ: categoryId ที่รับมานี้ จริงๆ แล้วคือ "SubCategory ID" (ตาม Form ของคุณ)
-        const { title, description, price, quantity, categoryId, images } = req.body;
+        // ✅ แก้ไข 1: เพิ่ม productUrl ในการรับค่า
+        const { title, description, price, quantity, categoryId, images, productUrl } = req.body;
 
         // 1. ดักสินค้าซ้ำ
         const exist = await prisma.product.findFirst({ where: { title } });
@@ -39,6 +38,7 @@ exports.create = async (req, res) => {
                 description: typeof description === 'string' ? JSON.parse(description) : description,
                 price: parseFloat(price),
                 quantity: Number(quantity),
+                productUrl: productUrl, // ✅ มีค่าแล้ว (ไม่ error)
                 // *** ใส่ ID ให้ถูกช่อง ***
                 categoryId: subCategoryInfo.categoryId, // ใส่ ID พ่อ (ที่หาเจอจาก Database)
                 subCategoryId: subCatId,                // ใส่ ID ลูก (ที่ส่งมาจาก Frontend)
@@ -102,30 +102,47 @@ exports.list = async(req,res) =>{
     }
 };
 
-// ===================== READ PRODUCT =====================
-exports.read = async(req,res) =>{
-    try{
-        const {id} = req.params;
+// ===================== READ PRODUCT (Support ID-Slug) =====================
+exports.read = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // ตัวอย่างค่าที่ได้รับ: id = "1-intel-i5-gen-13"
+
+        //  ใช้ parseInt: มันจะดึงเลข "1" ออกมา แล้วทิ้งตัวหนังสือข้างหลังไป
+        const productId = parseInt(id);
+
+        // เช็คว่าถ้า parse ออกมาแล้วไม่ใช่ตัวเลข (กรณีส่งมั่วๆมา) ให้ error
+        if (isNaN(productId)) {
+             return res.status(400).json({ message: "Invalid Product ID" });
+        }
+
+        // ค้นหาด้วย ID ที่แกะได้
         const product = await prisma.product.findUnique({
-            where: { id: Number(id) },
+            where: { id: productId },
             include: {
                 category: true,
                 subCategory: true,
                 images: true
-            } 
+            }
         });
+
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
         res.send(product);
 
-    } catch (err){
+    } catch (err) {
         console.log(err);
-        res.status(500).json({ message : "read product controllers Error" })
+        res.status(500).json({ message: "Read product failed" });
     }
 };
 
 // ===================== UPDATE PRODUCT =====================
 exports.update = async (req, res) => {
     try {
-        const { title, description, price, quantity, categoryId, images, properties } = req.body;
+        // ✅ แก้ไข 2: เพิ่ม productUrl ในการรับค่าเพื่ออัปเดต
+        const { title, description, price, quantity, categoryId, images, properties, productUrl } = req.body;
         const productId = Number(req.params.id);
 
         // 1. ดึงข้อมูลสินค้า "เดิม" มาก่อน (เพื่อเอาราคาเก่ามาเก็บประวัติ)
@@ -178,6 +195,7 @@ exports.update = async (req, res) => {
                 description: typeof description === 'string' ? JSON.parse(description) : description,
                 price: newPrice,
                 quantity: parseInt(quantity),
+                productUrl: productUrl, // ✅ แก้ไข 3: เพิ่มบรรทัดนี้เพื่อบันทึก URL ลง DB
                 categoryId: subCategoryInfo.categoryId,
                 subCategoryId: subCatId,
                 // เพิ่มรูปใหม่ได้เฉพาะกรณีที่มี images
@@ -253,8 +271,7 @@ const handleQuery = async(req,res,query) => {
     const products = await prisma.product.findMany({
     where: { 
                     title: { 
-                        startsWith: query, // <--- แก้จาก contains เป็น startsWith
-                        // mode: 'insensitive' // (ถ้าใช้ PostgreSQL ให้เปิดบรรทัดนี้เพื่อให้ I เท่ากับ i)
+                        startsWith: query, 
                     } 
                 },
     include: { category:true, subCategory:true, images:true }
@@ -282,9 +299,8 @@ const handlePrice = async(req,res,priceRange) =>{
 const handleCategory = async(req,res,categoryId) =>{
      try{
      const products = await prisma.product.findMany({
-                // *** แก้ไขตรงนี้: เปลี่ยน categoryId เป็น subCategoryId ***
      where:{ 
-                    subCategoryId: {  // <--- ใช้ subCategoryId แทน
+                    subCategoryId: {  
                         in: categoryId.map(id=> Number(id)) 
                     } 
                 },
@@ -355,7 +371,6 @@ exports.listby = async (req, res) => {
     try {
       const { sort = "createdAt", order = "desc", limit = 10 } = req.body;
       
-      // Validate sort field - allow only valid Product fields
       const validSortFields = ['id', 'title', 'price', 'sold', 'quantity', 'createdAt', 'updatedAt'];
       const sortField = validSortFields.includes(sort) ? sort : 'createdAt';
       const sortOrder = ['asc', 'desc'].includes(order) ? order : 'desc';
@@ -378,11 +393,11 @@ exports.getAllProductPriceHistory = async (req, res) => {
     try {
       const history = await prisma.productPriceHistory.findMany({
         include: {
-          changedBy: true, // ผู้แก้ไข
-          product: true    // สินค้าที่แก้ไข
+          changedBy: true, 
+          product: true    
         },
         orderBy: {
-          changedAt: 'desc' // เรียงจากล่าสุดไปเก่าสุด
+          changedAt: 'desc' 
         }
       });
       res.json(history);
@@ -391,5 +406,3 @@ exports.getAllProductPriceHistory = async (req, res) => {
       res.status(500).json({ message: "getAllProductPriceHistory controllers Error" });
     }
   };
-  
-

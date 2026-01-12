@@ -5,31 +5,39 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { numberFormat } from '../../utils/number';
 
-const ProductCard = ({ item, showTitle = true, }) => {
+const ProductCard = ({ item, showTitle = true }) => {
   const actionAddtoCart = useEcomStore((state) => state.actionAddtoCart);
+
+  //  สร้าง Slug อัตโนมัติจากชื่อสินค้า
+  // เช่น "Mouse Logitech G-Pro" -> "mouse-logitech-g-pro"
+  const productSlug = item.title
+    .toLowerCase()
+    .replace(/\s+/g, '-')                 // เปลี่ยนช่องว่าง เป็นขีด -
+    .replace(/[^\w\u0E00-\u0E7F-]+/g, '') // อนุญาตแค่ ภาษาไทย, อังกฤษ, ตัวเลข, ขีด (ลบอักขระพิเศษออก)
+    .replace(/\-\-+/g, '-')               // ลบขีดที่ซ้ำกัน (เช่น -- ให้เหลือ -)
+    .replace(/^-+/, '')                   // ลบขีดตัวหน้าสุด (ถ้ามี)
+    .replace(/-+$/, '');                  // ลบขีดตัวท้ายสุด (ถ้ามี)
+
+  //  สร้าง Link รูปแบบ: /product/{ID}-{Slug}
+  // เช่น /product/15-gaming-mouse-logitech
+  const linkPath = `/product/${item.id}-${productSlug}`;
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.5 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
-      // 1. สำคัญมาก: สั่งให้ตัวการ์ดยืดความสูงให้เต็มช่อง Grid
       className="h-full"
     >
-      {/* 2. Card Container: 
-          - h-full: ยืดความสูงตามแม่
-          - flex flex-col: จัดเรียงแนวตั้ง
-          - justify-between: ดันส่วนบนกับส่วนล่างให้ห่างกันสุดขอบ 
-      */}
       <div className="border rounded-md shadow-md p-2 w-full h-full flex flex-col justify-between bg-white hover:shadow-lg transition-shadow duration-300">
         
         {/* --- ส่วนเนื้อหาด้านบน (รูป + ข้อความ) --- */}
         <div className="flex flex-col gap-2">
             
-            {/* รูปภาพ: ล็อคความสูง (h-48) เพื่อให้รูปเท่ากันทุกใบ */}
+            {/* รูปภาพ */}
             <div className="w-full h-48 overflow-hidden rounded-md relative bg-gray-200"> 
                 {item.images && item.images.length > 0 ? (
-                    <Link to={`/product/${item.id}`} className="w-full h-full block">
+                    <Link to={linkPath} className="w-full h-full block">
                         <img
                             src={item.images[0].url}
                             alt={item.title}
@@ -43,22 +51,19 @@ const ProductCard = ({ item, showTitle = true, }) => {
                 )}
             </div>
 
-            {/* ชื่อและรายละเอียด */}
+            {/* ชื่อสินค้า */}
             <div className="py-2">
                 {showTitle && (
-                    <Link to={`/product/${item.id}`}>
-                        {/* line-clamp-2: ตัดคำให้เหลือ 2 บรรทัด ถ้าชื่อยาวเกินไป จะได้ไม่ดันกล่องจนเบี้ยวมาก */}
-                        <h2 className="text-lg font-bold line-clamp-2 hover:text-blue-600 cursor-pointer min-h-[3.5rem]">
+                    <Link to={linkPath}>
+                        <h2 className="text-lg font-bold line-clamp-2 hover:text-blue-600 cursor-pointer min-h-[3.5rem]" title={item.title}>
                             {item.title}
                         </h2>
                     </Link>
                 )}
-              
             </div>
         </div>
 
         {/* --- ส่วนด้านล่าง (ราคา + ปุ่ม) --- */}
-        {/* ส่วนนี้จะถูกดันลงมาติดขอบล่างสุดเสมอ เพราะเราใช้ justify-between ที่ div หลัก */}
         <div className="mt-2 flex justify-between items-center border-t pt-3">
           <span className="text-lg font-bold text-blue-600">
             {numberFormat(item.price)}

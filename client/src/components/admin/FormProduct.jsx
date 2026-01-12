@@ -11,15 +11,16 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-  Plus,
   Filter,
   XCircle,
   AlertCircle,
   CheckCircle2,
-  ImageIcon
+  ImageIcon,
+  Plus // เพิ่ม Plus กลับเข้ามา
 } from "lucide-react"; 
 import { numberFormat } from "../../utils/number";
 
+// 1. ลบ productUrl ออกจาก initialState
 const initialState = {
   title: "",
   description: {}, 
@@ -27,6 +28,7 @@ const initialState = {
   quantity: 0,
   categoryId: "",
   images: [],
+  // productUrl: "",  <-- ลบทิ้ง
 };
 
 const FormProduct = () => {
@@ -44,7 +46,7 @@ const FormProduct = () => {
   const [specKey, setSpecKey] = useState(""); 
   const [specValue, setSpecValue] = useState(""); 
 
-  // --- Filter State (แก้ไขใหม่ แยก Main/Sub) ---
+  // --- Filter State ---
   const [search, setSearch] = useState("");
   const [filterMainCatId, setFilterMainCatId] = useState("");
   const [filterSubCatId, setFilterSubCatId] = useState("");
@@ -55,7 +57,7 @@ const FormProduct = () => {
 
   useEffect(() => {
     getCategory(token);
-    getProduct(1000); // Load เยอะหน่อยเผื่อ Filter
+    getProduct(1000); 
   }, [getCategory, getProduct, token]);
 
   // --- Handle Form Input ---
@@ -75,6 +77,7 @@ const FormProduct = () => {
     }
 
     try {
+      // ส่ง form ไป Backend (ไม่ต้องมี productUrl แล้ว)
       const res = await createProduct(token, form);
       const productTitle = res.data?.product?.title || form.title;
       toast.success(`เพิ่มสินค้า ${productTitle} เรียบร้อย (Success)`);
@@ -122,26 +125,15 @@ const FormProduct = () => {
     }
   };
 
-  // --- Logic การกรองข้อมูล (New Filter System) ---
+  // --- Logic การกรองข้อมูล ---
   const filteredProducts = products.filter((item) => {
-    // 1. Search Text
     const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
-    
-    // 2. Category Logic
     let matchesCategory = true;
 
     if (filterSubCatId) {
-        // ถ้าเลือก Sub Category -> ต้องตรงเป๊ะๆ
-        matchesCategory = item.categoryId === Number(filterSubCatId);
+        matchesCategory = item.subCategoryId === Number(filterSubCatId);
     } else if (filterMainCatId) {
-        // ถ้าเลือกแค่ Main Category -> ต้องหาว่าสินค้าอยู่ใน Sub ไหนของ Main นี้บ้าง
-        const mainCat = categories.find(c => c.id === Number(filterMainCatId));
-        if (mainCat && mainCat.subCategories) {
-            const subCatIds = mainCat.subCategories.map(s => s.id);
-            matchesCategory = subCatIds.includes(item.categoryId);
-        } else {
-            matchesCategory = false;
-        }
+        matchesCategory = item.categoryId === Number(filterMainCatId);
     }
 
     return matchesSearch && matchesCategory;
@@ -153,17 +145,14 @@ const FormProduct = () => {
   const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [search, filterMainCatId, filterSubCatId]);
 
   // --- Helpers ---
-  // สำหรับ Form (Create)
   const formMainCategory = categories.find(cat => cat.id === Number(formMainCatId));
   const formSubCategories = formMainCategory?.subCategories || [];
 
-  // สำหรับ Filter (Search)
   const filterMainCategory = categories.find(cat => cat.id === Number(filterMainCatId));
   const filterSubCategories = filterMainCategory?.subCategories || [];
 
@@ -199,6 +188,8 @@ const FormProduct = () => {
                     />
                 </div>
 
+                {/* 2. ลบช่อง Product URL ออกไปแล้ว เพราะใช้ Auto Slug */}
+
                 {/* Price & Qty */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -227,7 +218,7 @@ const FormProduct = () => {
                     </div>
                 </div>
 
-                {/* Categories (Create Form) */}
+                {/* Categories */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่หลัก (Main Category)</label>
@@ -236,7 +227,7 @@ const FormProduct = () => {
                             value={formMainCatId}
                             onChange={(e) => {
                                 setFormMainCatId(e.target.value);
-                                setForm({ ...form, categoryId: "" }); // Reset sub when main changes
+                                setForm({ ...form, categoryId: "" }); 
                             }}
                             required
                         >
@@ -289,7 +280,6 @@ const FormProduct = () => {
                         </button>
                     </div>
                     
-                    {/* Spec Tags */}
                     <div className="flex flex-wrap gap-2">
                         {Object.entries(form.description).map(([key, value]) => (
                             <span key={key} className="inline-flex items-center gap-1 bg-gray-100 border border-gray-300 px-2 py-1 rounded text-xs font-medium text-gray-700">
@@ -316,11 +306,9 @@ const FormProduct = () => {
         </div>
       </div>
 
-      {/* ----------------- SECTION 2: SEARCH & FILTER (แก้ไขใหม่) ----------------- */}
+      {/* ----------------- SECTION 2: SEARCH & FILTER (เหมือนเดิม) ----------------- */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            
-            {/* Search */}
             <div className="relative w-full md:w-1/3">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input 
@@ -331,8 +319,6 @@ const FormProduct = () => {
                     onChange={(e) => setSearch(e.target.value)}
                 />
             </div>
-
-            {/* Category Filters */}
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-2/3 justify-end">
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <Filter size={18} className="text-gray-500" />
@@ -341,25 +327,22 @@ const FormProduct = () => {
                         value={filterMainCatId}
                         onChange={(e) => {
                             setFilterMainCatId(e.target.value);
-                            setFilterSubCatId(""); // Reset sub when main filter changes
+                            setFilterSubCatId(""); 
                         }}
                     >
                         <option value="">ทั้งหมด (All Main)</option>
                         {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                 </div>
-
                 <select 
                     className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none w-full md:w-48 cursor-pointer disabled:bg-gray-100 disabled:text-gray-400"
                     value={filterSubCatId}
                     onChange={(e) => setFilterSubCatId(e.target.value)}
-                    disabled={!filterMainCatId} // ปิดถ้ายังไม่เลือก Main
+                    disabled={!filterMainCatId}
                 >
                     <option value="">ทั้งหมด (All Sub)</option>
                     {filterSubCategories.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
-
-                {/* Reset Button */}
                 {(search || filterMainCatId) && (
                     <button 
                         onClick={() => {
@@ -397,15 +380,18 @@ const FormProduct = () => {
                          const realIndex = indexOfFirstItem + index + 1;
                          const isOutOfStock = item.quantity === 0;
                          const isLowStock = item.quantity > 0 && item.quantity < 10;
+                         
+                         // 3. สร้าง Link Auto Slug สำหรับหน้า Admin (ถ้าต้องการกดไปดูหน้าบ้าน)
+                         const productSlug = item.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u0E00-\u0E7F-]+/g, '');
+                         const viewLink = `/product/${item.id}-${productSlug}`;
 
                          return (
                             <tr key={item.id} className="hover:bg-gray-50 transition duration-150 group">
                                 <td className="p-4 text-center text-gray-400 text-xs">{realIndex}</td>
                                 
-                                {/* Image */}
                                 <td className="p-4 text-center">
                                     <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden mx-auto">
-                                        {item.images && item.images.length > 0 ? (
+                                        {item.images && item.images.length > 0 && item.images[0] ? (
                                             <img src={item.images[0].url} alt={item.title} className="w-full h-full object-cover" />
                                         ) : (
                                             <ImageIcon size={20} className="text-gray-400" />
@@ -413,18 +399,17 @@ const FormProduct = () => {
                                     </div>
                                 </td>
 
-                                {/* Product Name */}
                                 <td className="p-4">
-                                    <p className="font-bold text-gray-800 line-clamp-1" title={item.title}>{item.title}</p>
+                                    <Link to={viewLink} target="_blank" className="font-bold text-gray-800 line-clamp-1 hover:text-blue-600" title="คลิกเพื่อดูหน้าสินค้าจริง">
+                                        {item.title}
+                                    </Link>
                                     <p className="text-xs text-gray-400">ID: {item.id}</p>
                                 </td>
 
-                                {/* Price */}
                                 <td className="p-4 text-center font-mono font-medium text-blue-600">
                                     {numberFormat(item.price)}
                                 </td>
 
-                                {/* Stock Status */}
                                 <td className="p-4 text-center">
                                     {isOutOfStock ? (
                                         <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 px-2 py-1 rounded-full text-xs font-bold border border-red-100">
@@ -439,15 +424,9 @@ const FormProduct = () => {
                                     )}
                                 </td>
 
-                                {/* Sold */}
                                 <td className="p-4 text-center text-sm text-gray-600">{item.sold}</td>
+                                <td className="p-4 text-right text-xs text-gray-500">{formatDate(item.updatedAt)}</td>
 
-                                {/* Date */}
-                                <td className="p-4 text-right text-xs text-gray-500">
-                                    {formatDate(item.updatedAt)}
-                                </td>
-
-                                {/* Actions */}
                                 <td className="p-4 text-center">
                                     <div className="flex justify-center gap-2">
                                         <Link 
