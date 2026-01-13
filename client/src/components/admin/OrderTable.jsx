@@ -13,6 +13,17 @@ const OrderTable = ({
   token,  // รับ token เข้ามาเพื่อใช้ส่ง API
   onSaveSuccess, 
 }) => {
+  // แปลงสถานะเป็นภาษาไทย
+  const getStatusText = (status) => {
+    switch (status) {
+      case "Not Process": return "รอตรวจสอบ";
+      case "Processing": return "กำลังดำเนินการ";
+      case "Completed": return "จัดส่งสำเร็จ";
+      case "Cancelled": return "ยกเลิก";
+      default: return status;
+    }
+  };
+
   // Standard: แยกฟังก์ชัน Helper สำหรับสีสถานะ
   const getStatusColor = (status) => {
     switch (status) {
@@ -225,7 +236,7 @@ const OrderTable = ({
                       item.orderStatus
                     )}`}
                   >
-                    {item.orderStatus}
+                    {getStatusText(item.orderStatus)}
                   </span>
                 </td>
 

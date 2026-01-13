@@ -19,7 +19,6 @@ import HomeUser from "../pages/user/HomeUser";
 import ProtectRouteUser from "./ProtectRouteUser"; 
 import ProtectRouteAdmin from "./ProtectRouteAdmin"; 
 import EditProduct from "../pages/admin/EditProduct";
-import Payment from "../pages/user/Payment";
 import ManageOrders from '../pages/admin/ManageOrders'
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword";
@@ -83,7 +82,6 @@ const router = createBrowserRouter([
     element: <ProtectRouteUser element={<LayoutUser />} />,
     children: [
       { index: true, element: <HomeUser /> },
-      { path: "payment", element: <Payment /> },
       { path: "history", element: <History /> },
       // หมายเหตุ: ถ้าคุณอยากให้ Profile มี Sidebar แบบหน้า History 
       // คุณสามารถย้าย { path: "profile", ... } มาใส่ในกลุ่มนี้แทนได้ครับ

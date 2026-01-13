@@ -42,6 +42,26 @@ const RecentOrders = () => {
     });
   };
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case "Not Process": return "รอตรวจสอบ";
+      case "Processing": return "กำลังดำเนินการ";
+      case "Completed": return "จัดส่งสำเร็จ";
+      case "Cancelled": return "ยกเลิก";
+      default: return status;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Not Process": return "bg-gray-100 text-gray-700 border-gray-200";
+      case "Processing": return "bg-blue-100 text-blue-700 border-blue-200";
+      case "Completed": return "bg-green-100 text-green-700 border-green-200";
+      case "Cancelled": return "bg-red-100 text-red-700 border-red-200";
+      default: return "bg-gray-100 text-gray-700 border-gray-200";
+    }
+  };
+
   if (loading) {
       return <div className="p-4 flex justify-center"><Loader className="animate-spin text-blue-500"/></div>
   }
@@ -78,11 +98,8 @@ const RecentOrders = () => {
                                 {numberFormat(o.cartTotal)}
                             </td>
                             <td className="px-4 py-3 text-center">
-                                <span className={`px-2 py-1 rounded-full text-xs font-semibold border 
-                                    ${o.orderStatus === 'Completed' ? 'bg-green-100 text-green-700 border-green-200' : 
-                                      o.orderStatus === 'Cancelled' ? 'bg-red-100 text-red-700 border-red-200' : 
-                                      'bg-blue-100 text-blue-700 border-blue-200'}`}>
-                                    {o.orderStatus}
+                                <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${getStatusColor(o.orderStatus)}`}>
+                                    {getStatusText(o.orderStatus)}
                                 </span>
                             </td>
                         </tr>

@@ -30,6 +30,16 @@ const HistoryCard = () => {
     }
   };
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case "Not Process": return "รอตรวจสอบ";
+      case "Processing": return "กำลังดำเนินการ";
+      case "Completed": return "จัดส่งสำเร็จ";
+      case "Cancelled": return "ยกเลิก";
+      default: return status;
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Not Process":
@@ -119,7 +129,7 @@ const HistoryCard = () => {
 
                 <div>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${getStatusColor(item.orderStatus)}`}>
-                    {item.orderStatus}
+                    {getStatusText(item.orderStatus)}
                   </span>
                 </div>
               </div>

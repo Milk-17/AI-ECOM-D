@@ -99,10 +99,10 @@ const DashboardStats = () => {
 
       // --- 4. เตรียมกราฟโดนัท (สถานะ) ---
       const pieData = [
-        { name: 'รอตรวจสอบ (Pending)', value: calculated.pendingOrders, color: '#F59E0B' }, 
-        { name: 'กำลังดำเนินการ (Processing)', value: calculated.processingOrders, color: '#3B82F6' },
-        { name: 'สำเร็จ (Completed)', value: calculated.completedOrders, color: '#10B981' },
-        { name: 'ยกเลิก (Cancelled)', value: orderList.filter(o => o.orderStatus === 'Cancelled').length, color: '#EF4444' }
+        { name: 'รอตรวจสอบ', value: calculated.pendingOrders, color: '#F59E0B' }, 
+        { name: 'กำลังดำเนินการ', value: calculated.processingOrders, color: '#3B82F6' },
+        { name: 'สำเร็จ', value: calculated.completedOrders, color: '#10B981' },
+        { name: 'ยกเลิก', value: orderList.filter(o => o.orderStatus === 'Cancelled').length, color: '#EF4444' }
       ];
       setStatusData(pieData.filter(item => item.value > 0));
 
@@ -152,26 +152,26 @@ const DashboardStats = () => {
         {/* --- Section 2: สถานะออเดอร์ (Order Status) --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCardSimple 
-                title="คำสั่งซื้อรวม (Total Orders)" 
+                title="คำสั่งซื้อรวม" 
                 value={stats.totalOrders} 
                 icon={<ShoppingCart size={20} className="text-gray-600" />} 
             />
             <StatCardSimple 
-                title="รอตรวจสอบ (Pending)" 
+                title="รอตรวจสอบ" 
                 value={stats.pendingOrders} 
                 icon={<Clock size={20} className="text-yellow-600" />} 
                 bgColor="bg-yellow-50 border-yellow-200"
                 textColor="text-yellow-700"
             />
             <StatCardSimple 
-                title="ดำเนินการ (Processing)" 
+                title="กำลังดำเนินการ" 
                 value={stats.processingOrders} 
                 icon={<Package size={20} className="text-blue-600" />} 
                 bgColor="bg-blue-50 border-blue-200"
                 textColor="text-blue-700"
             />
             <StatCardSimple 
-                title="สำเร็จ (Completed)" 
+                title="จัดส่งสำเร็จ" 
                 value={stats.completedOrders} 
                 icon={<CheckCircle size={20} className="text-green-600" />} 
                 bgColor="bg-green-50 border-green-200"
