@@ -49,10 +49,10 @@ const ProductDetailCard = () => {
   if (!product) return <p className="text-center py-10">Loading...</p>;
 
   return (
-    <div className="max-w-6xl mx-auto my-10 p-4">
+    <div className="max-w-6xl mx-auto my-4 md:my-10 p-4">
       {/* Main Section */}
       <motion.div
-        className="bg-white shadow-lg rounded-lg p-6 flex flex-col md:flex-row gap-6"
+        className="bg-white shadow-lg rounded-lg p-4 md:p-6 flex flex-col md:flex-row gap-4 md:gap-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -63,20 +63,20 @@ const ProductDetailCard = () => {
             <Swiper
               navigation={true}
               modules={[Navigation]}
-              className="w-full h-64 md:h-96 rounded-lg"
+              className="w-full h-56 md:h-80 lg:h-96 rounded-lg"
             >
               {product.images.map((img, index) => (
                 <SwiperSlide key={index}>
                   <img
                     src={img.url}
                     alt={`product-${index}`}
-                    className="w-full h-64 md:h-96 object-cover rounded-lg shadow-lg hover:scale-105 transition-transform duration-500"
+                    className="w-full h-56 md:h-80 lg:h-96 object-cover rounded-lg shadow-lg hover:scale-105 transition-transform duration-500"
                   />
                 </SwiperSlide>
               ))}
             </Swiper>
           ) : (
-            <div className="w-full h-64 bg-gray-200 flex items-center justify-center rounded-lg">
+            <div className="w-full h-56 md:h-80 bg-gray-200 flex items-center justify-center rounded-lg">
               No Image
             </div>
           )}
@@ -85,10 +85,9 @@ const ProductDetailCard = () => {
         {/* Right: ข้อมูลสินค้า */}
         <div className="md:w-1/2 flex flex-col justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">{product.title}</h1>
            
-            <p className="text-xl font-semibold mb-2">
-              {/* <--- 2. แก้ไขตรงนี้ ใส่ numberFormat */}
+            <p className="text-lg md:text-xl font-semibold mb-2">
               ราคา: <span className="text-green-600">{numberFormat(product.price)} บาท</span>
             </p>
             <p className="text-sm text-gray-500 mb-4">
@@ -97,16 +96,21 @@ const ProductDetailCard = () => {
           </div>
 
           {/* ปุ่มเพิ่มลงตะกร้า */}
-          <div className="flex gap-4 flex-wrap">
+          <div className="flex gap-4 flex-wrap mt-4">
             <button
               onClick={() => {
                 actionAddtoCart(product);
                 toast.success("เพิ่มสินค้าลงตะกร้าแล้ว!");
               }}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-800 text-white px-6 py-3 rounded-lg shadow-md font-semibold transition-all duration-300"
+              disabled={product.quantity < 1}
+              className={`flex items-center justify-center gap-2 w-full md:w-auto px-6 py-3 rounded-lg shadow-md font-semibold transition-all duration-300 ${
+                product.quantity < 1
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-800 text-white"
+              }`}
             >
               <ShoppingCart size={20} />
-              เพิ่มลงตะกร้า
+              {product.quantity < 1 ? "สินค้าหมด" : "เพิ่มลงตะกร้า"}
             </button>
           </div>
         </div>

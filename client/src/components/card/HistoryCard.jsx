@@ -65,104 +65,112 @@ const HistoryCard = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4">
-      <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-        <Package className="text-blue-600" /> ประวัติการสั่งซื้อ
-      </h1>
+    <div className="max-w-5xl mx-auto p-4 md:p-6">
+      {/* Header with Gradient */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl p-6 mb-6 shadow-lg">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+          <Package size={32} /> ประวัติการสั่งซื้อ
+        </h1>
+        <p className="text-blue-100 mt-2 text-sm">ติดตามและตรวจสอบคำสั่งซื้อของคุณได้ที่นี่</p>
+      </div>
 
       {/* Empty State */}
       {orders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 text-gray-500">
-          <AlertCircle size={48} className="mb-4 text-gray-400" />
-          <p className="text-lg font-medium mb-2">คุณยังไม่มีประวัติการสั่งซื้อ</p>
-          <p className="text-sm text-gray-400 mb-6">เริ่มช้อปปิ้งสินค้าที่คุณถูกใจได้เลย!</p>
+        <div className="flex flex-col items-center justify-center p-12 md:p-16 bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl border border-gray-200 text-gray-500 shadow-sm">
+          <div className="bg-blue-100 p-6 rounded-full mb-4">
+            <AlertCircle size={48} className="text-blue-600" />
+          </div>
+          <p className="text-xl font-bold mb-2 text-gray-800">คุณยังไม่มีประวัติการสั่งซื้อ</p>
+          <p className="text-sm text-gray-500 mb-6 text-center max-w-md">เริ่มช้อปปิ้งสินค้าที่คุณถูกใจได้เลย เราพร้อมส่งถึงมือคุณ!</p>
           <Link to="/shop">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg shadow-md transition-colors flex items-center gap-2">
-                <ShoppingBag size={18} /> เลือกซื้อสินค้า
+            <button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-2 font-semibold">
+                <ShoppingBag size={20} /> เริ่มช้อปปิ้ง
             </button>
           </Link>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {orders.map((item, index) => (
             <div
               key={index}
-              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
+              className="bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden"
             >
-              {/* Header */}
-              <div className="flex flex-col md:flex-row justify-between items-start mb-4 gap-4 pb-4 border-b border-gray-100">
-                <div className="space-y-2 w-full md:w-3/4">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Calendar size={16} />
-                    <span>วันที่สั่งซื้อ: {formatDate(item.createdAt)}</span>
+              {/* Header with Gradient */}
+              <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 md:p-6 border-b border-gray-200">
+                <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Calendar size={18} className="text-blue-600" />
+                      <span>วันที่สั่งซื้อ: <span className="font-bold">{formatDate(item.createdAt)}</span></span>
+                    </div>
+
+                    {/* แสดงเลขพัสดุ (ถ้ามี) */}
+                    {item.trackingNumber && (
+                      <div className="flex items-center gap-2 text-sm font-semibold text-blue-600 bg-blue-100 px-3 py-2 rounded-lg w-fit border border-blue-200 shadow-sm">
+                          <Truck size={18} />
+                          <span className="font-mono">เลขพัสดุ: {item.trackingNumber}</span>
+                      </div>
+                    )}
+                    
+                    {item.shippingAddress && (
+                      <div className="flex items-start gap-2 text-sm text-gray-700 bg-white p-3 rounded-lg border border-gray-200 mt-2">
+                          <MapPin size={18} className="mt-0.5 flex-shrink-0 text-gray-500" />
+                          <span className="leading-relaxed">
+                              {item.shippingAddress}
+                          </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* แสดงเลขพัสดุ (ถ้ามี) */}
-                  {item.trackingNumber && (
-                    <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded w-fit border border-blue-100">
-                        <Truck size={16} />
-                        <span className="font-mono font-medium">เลขพัสดุ: {item.trackingNumber}</span>
-                    </div>
-                  )}
-                  
-                  {/* ✅ แก้ไขตรงนี้: ใช้ item.shippingAddress แทน orderedBy.address */}
-                  {item.shippingAddress && (
-                    <div className="flex items-start gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md mt-1">
-                        <MapPin size={16} className="mt-1 flex-shrink-0 text-gray-500" />
-                        <span className="leading-relaxed">
-                            {/* แสดงที่อยู่ (Snapshot) */}
-                            {item.shippingAddress}
-                        </span>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${getStatusColor(item.orderStatus)}`}>
-                    {item.orderStatus}
-                  </span>
+                  <div className="flex-shrink-0">
+                    <span className={`px-4 py-2 rounded-full text-xs font-bold border whitespace-nowrap shadow-sm ${getStatusColor(item.orderStatus)}`}>
+                      {item.orderStatus}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Table */}
-              <div className="overflow-x-auto rounded-lg border border-gray-100">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
-                    <tr>
-                      <th className="px-4 py-3">สินค้า</th>
-                      <th className="px-4 py-3 text-right">ราคา</th>
-                      <th className="px-4 py-3 text-center">จำนวน</th>
-                      <th className="px-4 py-3 text-right">รวม</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {item.products?.map((product, i) => (
-                      <tr key={i} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 font-medium text-gray-800">
-                            {product.product.title}
-                        </td>
-                        <td className="px-4 py-3 text-right text-gray-600">
-                            {numberFormat(product.price)}
-                        </td>
-                        <td className="px-4 py-3 text-center text-gray-600">
-                            {product.count}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold text-gray-800">
-                          {numberFormat(product.count * product.price)}
-                        </td>
+              {/* Products Table */}
+              <div className="p-4 md:p-6">
+                <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 text-xs font-bold uppercase">
+                      <tr>
+                        <th className="px-4 py-3">สินค้า</th>
+                        <th className="px-4 py-3 text-right">ราคา</th>
+                        <th className="px-4 py-3 text-center">จำนวน</th>
+                        <th className="px-4 py-3 text-right">รวม</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {item.products?.map((product, i) => (
+                        <tr key={i} className="hover:bg-blue-50 transition-colors">
+                          <td className="px-4 py-3 font-semibold text-gray-800">
+                              {product.product.title}
+                          </td>
+                          <td className="px-4 py-3 text-right text-gray-600">
+                              {numberFormat(product.price)}
+                          </td>
+                          <td className="px-4 py-3 text-center font-medium text-gray-700">
+                              {product.count}
+                          </td>
+                          <td className="px-4 py-3 text-right font-bold text-gray-900">
+                            {numberFormat(product.count * product.price)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-              {/* Total Footer */}
-              <div className="flex justify-end items-center mt-4 pt-2">
-                <div className="text-right">
-                  <p className="text-xs text-gray-500 mb-1">ยอดรวมสุทธิ</p>
-                  <p className="text-xl font-bold text-blue-600">
-                    {numberFormat(item.cartTotal)} <span className="text-sm font-normal text-gray-500">บาท</span>
-                  </p>
+                {/* Total Footer with Gradient */}
+                <div className="flex justify-end items-center mt-4 pt-4 border-t border-gray-200">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 rounded-xl border border-blue-200">
+                    <p className="text-xs text-gray-600 mb-1 font-medium">ยอดรวมสุทธิ</p>
+                    <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                      {numberFormat(item.cartTotal)} <span className="text-sm font-normal text-gray-500">บาท</span>
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

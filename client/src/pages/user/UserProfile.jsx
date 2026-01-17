@@ -1,9 +1,9 @@
 // client/src/pages/user/UserProfile.jsx
 import React, { useState, useEffect } from "react";
 import useEcomStore from "../../store/ecom-store";
-import { updateUserProfile, changePassword } from "../../api/user"; // ✅ Import changePassword เพิ่ม
+import { updateUserProfile, changePassword } from "../../api/user";
 import { toast } from "react-toastify";
-import { User, Mail, Edit2, Save, MapPin, History, X, CheckCircle, Lock, Key } from "lucide-react"; // ✅ เพิ่ม Icon
+import { User, Mail, Edit2, Save, MapPin, History, X, CheckCircle, Lock, Key } from "lucide-react";
 import { Link } from "react-router-dom";
 import moment from "moment/min/moment-with-locales";
 
@@ -129,32 +129,38 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-5xl">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <User className="text-blue-600" /> ข้อมูลส่วนตัว (My Profile)
-      </h1>
+    <div className="container mx-auto p-4 max-w-6xl">
+      {/* Header with Gradient */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl p-6 mb-6 shadow-lg">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+          <User size={32} /> ข้อมูลส่วนตัว
+        </h1>
+        <p className="text-blue-100 mt-2 text-sm">จัดการข้อมูลโปรไฟล์และความปลอดภัยของบัญชีคุณ</p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* --- Card 1: รูปโปรไฟล์ (ซ้าย) --- */}
         <div className="md:col-span-1">
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center text-center">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-2xl shadow-lg border border-blue-100 flex flex-col items-center text-center">
             <div className="relative mb-6 group">
-              <div className="w-32 h-32 bg-blue-50 rounded-full flex items-center justify-center border-4 border-white shadow-md overflow-hidden">
-                {userData.picture ? (
-                    <img 
-                        src={userData.picture} 
-                        alt="Profile" 
-                        className="w-full h-full object-cover"
-                        onError={(e) => { e.target.onError = null; e.target.src = "https://cdn-icons-png.flaticon.com/128/149/149071.png"; }}
-                    />
-                ) : (
-                    <User size={64} className="text-blue-400" />
-                )}
+              <div className="w-36 h-36 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center p-1 shadow-xl">
+                <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
+                  {userData.picture ? (
+                      <img 
+                          src={userData.picture} 
+                          alt="Profile" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.onError = null; e.target.src = "https://cdn-icons-png.flaticon.com/128/149/149071.png"; }}
+                      />
+                  ) : (
+                      <User size={64} className="text-blue-400" />
+                  )}
+                </div>
               </div>
             </div>
-            <h2 className="text-xl font-bold text-gray-800">{userData.name || "User"}</h2>
-
+            <h2 className="text-xl font-bold text-gray-800 mb-1">{userData.name || "User"}</h2>
+            <p className="text-sm text-gray-600 flex items-center gap-1"><Mail size={14}/> {userData.email}</p>
           </div>
         </div>
 
@@ -162,13 +168,18 @@ const UserProfile = () => {
         <div className="md:col-span-2 space-y-6">
             
             {/* --- Card 2: รายละเอียดบัญชี --- */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <h3 className="text-lg font-semibold text-gray-700">รายละเอียดบัญช (Account details)</h3>
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                      <Edit2 size={18} className="text-blue-600"/> รายละเอียดบัญชี
+                    </h3>
                     <button 
                         onClick={() => setIsEditing(!isEditing)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                            ${isEditing ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm ${
+                          isEditing 
+                            ? "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200" 
+                            : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700"
+                        }`}
                     >
                         {isEditing ? <><X size={16}/> ยกเลิก</> : <><Edit2 size={16}/> แก้ไขข้อมูล</>}
                     </button>
@@ -177,18 +188,27 @@ const UserProfile = () => {
                 <div className="space-y-5">
                     {/* ส่วนเลือก Avatar (ซ่อน/แสดง) */}
                     {isEditing && (
-                        <div className="mb-6 animate-fade-in bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <label className="block text-sm font-medium text-gray-700 mb-3 text-center">เลือกรูปโปรไฟล์ใหม่ (Choose a new profile picture )</label>
-                            <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 justify-items-center">
+                        <div className="mb-6 animate-fade-in bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-xl border-2 border-blue-200">
+                            <label className="block text-sm font-bold text-gray-700 mb-4 text-center flex items-center justify-center gap-2">
+                              <User size={18} className="text-blue-600"/> เลือกรูปโปรไฟล์ใหม่
+                            </label>
+                            <div className="grid grid-cols-4 sm:grid-cols-8 gap-4 justify-items-center">
                                 {avatars.map((url, idx) => (
                                     <div 
                                         key={idx}
                                         onClick={() => selectAvatar(url)}
-                                        className={`relative cursor-pointer rounded-full p-1 transition-all duration-200 
-                                            ${userData.picture === url ? 'ring-2 ring-blue-500 scale-110 bg-white shadow-sm' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                                        className={`relative cursor-pointer rounded-full p-1 transition-all duration-300 ${
+                                          userData.picture === url 
+                                            ? 'ring-4 ring-blue-500 scale-110 bg-white shadow-lg' 
+                                            : 'hover:scale-110 opacity-60 hover:opacity-100 hover:ring-2 hover:ring-blue-300'
+                                        }`}
                                     >
-                                        <img src={url} alt="avatar" className="w-10 h-10 rounded-full bg-gray-200"/>
-                                        {userData.picture === url && <div className="absolute -top-1 -right-1 text-blue-500 bg-white rounded-full shadow-sm"><CheckCircle size={14}/></div>}
+                                        <img src={url} alt="avatar" className="w-12 h-12 rounded-full bg-gray-200"/>
+                                        {userData.picture === url && (
+                                          <div className="absolute -top-1 -right-1 text-blue-500 bg-white rounded-full shadow-md">
+                                            <CheckCircle size={16}/>
+                                          </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -214,7 +234,11 @@ const UserProfile = () => {
                     {/* ปุ่ม Save Profile */}
                     {isEditing && (
                         <div className="pt-4 flex justify-end animate-fade-in">
-                            <button onClick={handleUpdateProfile} disabled={loading} className="bg-blue-600 text-white px-6 py-2.5 rounded-lg shadow-md hover:bg-blue-700 transition flex items-center gap-2 disabled:bg-gray-400">
+                            <button 
+                              onClick={handleUpdateProfile} 
+                              disabled={loading} 
+                              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            >
                                 {loading ? "กำลังบันทึก..." : <><Save size={18} /> บันทึกการเปลี่ยนแปลง</>}
                             </button>
                         </div>
@@ -223,14 +247,14 @@ const UserProfile = () => {
             </div>
 
             {/* --- Card 3: เปลี่ยนรหัสผ่าน (เพิ่มใหม่) --- */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
-                        <Lock size={20} className="text-gray-400"/> ความปลอดภัยและรหัสผ่าน (Security and password)
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                 <div className="flex justify-between items-center mb-4 pb-4 border-b-2 border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <Lock size={20} className="text-blue-600"/> ความปลอดภัยและรหัสผ่าน
                     </h3>
                     <button 
                         onClick={() => setIsChangePassword(!isChangePassword)}
-                        className="text-blue-600 text-sm hover:underline font-medium"
+                        className="text-blue-600 text-sm hover:text-blue-700 font-semibold hover:underline transition"
                     >
                         {isChangePassword ? "ซ่อน" : "เปลี่ยนรหัสผ่าน"}
                     </button>
@@ -282,9 +306,9 @@ const UserProfile = () => {
                              <button 
                                 onClick={handleUpdatePassword}
                                 disabled={loadingPass}
-                                className="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-black transition flex items-center gap-2 disabled:bg-gray-400 shadow-sm"
+                                className="bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white px-8 py-3 rounded-xl transition-all transform hover:scale-105 flex items-center gap-2 font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                             >
-                                {loadingPass ? "กำลังเปลี่ยน..." : "ยืนยันการเปลี่ยนรหัสผ่าน"}
+                                {loadingPass ? "กำลังเปลี่ยน..." : <><Key size={18}/> ยืนยันการเปลี่ยนรหัสผ่าน</>}
                             </button>
                         </div>
                     </div>
@@ -293,14 +317,24 @@ const UserProfile = () => {
 
             {/* เมนูลัด */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Link to="/user/history" className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:border-blue-400 hover:shadow-md transition flex items-center gap-4 group">
-                    <div className="bg-blue-50 p-3 rounded-full text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition"><History size={24} /></div>
-                    <div><h4 className="font-bold text-gray-800">ประวัติการสั่งซื้อ</h4><p className="text-xs text-gray-500">ติดตามสถานะสินค้าของคุณ</p></div>
+                <Link to="/user/history" className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-md border-2 border-blue-200 hover:border-blue-400 hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-4 group">
+                    <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-4 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
+                      <History size={28} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 text-lg">ประวัติการสั่งซื้อ</h4>
+                      <p className="text-xs text-gray-600 mt-1">ติดตามสถานะสินค้าของคุณ</p>
+                    </div>
                 </Link>
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:border-green-400 hover:shadow-md transition flex items-center gap-4 group cursor-pointer">
-                    <div className="bg-green-50 p-3 rounded-full text-green-600 group-hover:bg-green-600 group-hover:text-white transition"><MapPin size={24} /></div>
-                    <div><h4 className="font-bold text-gray-800">ที่อยู่จัดส่ง</h4><p className="text-xs text-gray-500">จัดการที่อยู่ของคุณ</p></div>
-                </div>
+                <Link to="/checkout" className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-md border-2 border-green-200 hover:border-green-400 hover:shadow-xl transition-all transform hover:scale-105 flex items-center gap-4 group">
+                    <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-4 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
+                      <MapPin size={28} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 text-lg">ที่อยู่จัดส่ง</h4>
+                      <p className="text-xs text-gray-600 mt-1">จัดการที่อยู่ของคุณ</p>
+                    </div>
+                </Link>
             </div>
 
         </div>

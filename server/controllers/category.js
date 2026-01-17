@@ -15,8 +15,7 @@ exports.createCategory = async (req, res) => {
    return res.status(400).json({ message: "Name is required" });
    }
   
-   // 2. ตรวจสอบว่ามี Category ชื่อนี้อยู่แล้วหรือไม่ (ป้องกันซ้ำ)
-   const existingCategory = await prisma.category.findFirst({ // <--- ✅ แก้ไขเป็น findFirst
+   const existingCategory = await prisma.category.findFirst({
      where: { name: name }, 
      });
   

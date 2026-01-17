@@ -11,7 +11,7 @@ import { Eye, EyeOff, Loader2, Lock, Mail, UserPlus, User } from "lucide-react";
 // --- Schema Validation (เพิ่ม name) ---
 const registerSchema = z
   .object({
-    name: z.string().min(2, { message: "ชื่อต้องมากกว่า 2 ตัวอักษร" }), // ✅ เพิ่มตรงนี้
+    name: z.string().min(2, { message: "ชื่อต้องมากกว่า 2 ตัวอักษร" }),
     email: z.string().email({ message: "รูปแบบ Email ไม่ถูกต้อง" }),
     password: z.string().min(8, { message: "Password ต้องมากกว่า 8 ตัวอักษร" }),
     confirmPassword: z.string(),

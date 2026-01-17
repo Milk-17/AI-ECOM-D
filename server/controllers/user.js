@@ -439,7 +439,7 @@ exports.updateProfile = async (req, res) => {
       where: { id: req.user.id },
       data: { 
         name: name,
-        picture: picture // ✅ บันทึกลง DB
+        picture: picture
       }
     });
 

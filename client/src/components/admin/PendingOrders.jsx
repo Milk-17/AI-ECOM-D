@@ -11,8 +11,6 @@ const PendingOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      // ✅ ควรใช้ token ในการดึงข้อมูลด้วย (ถ้า API ฝั่ง Backend ล็อคไว้)
-      // แต่ถ้า Code เดิมใช้ได้อยู่แล้ว ก็ใช้ตามนี้ครับ
       const res = await axios.get("http://localhost:5001/api/order/pending");
       setOrders(res.data);
     } catch (err) {

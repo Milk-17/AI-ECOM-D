@@ -43,7 +43,7 @@ const OrderTable = ({
     });
   };
 
-  // ✅ กรองให้เฉพาะตัวเลขและ - เท่านั้น
+
   const handleTrackingInput = (e, orderId) => {
     const value = e.target.value;
     // อนุญาตเฉพาะตัวเลข (0-9) และ - เท่านั้น
@@ -53,7 +53,6 @@ const OrderTable = ({
     handleTrackingChange({ target: { value: filteredValue } }, orderId);
   };
 
-  // ✅ ฟังก์ชันบันทึกเลขพัสดุ
   const handleSaveTracking = async (orderId) => {
     const trackingNumber = trackingInputs[orderId];
 

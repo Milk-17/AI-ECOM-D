@@ -1,10 +1,4 @@
 import React, { useState } from "react";
-import {
-  PaymentElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
-import "../stripe.css";
 import { saveOrder } from "../api/user";
 import useEcomStore from "../store/ecom-store";
 import { toast } from "react-toastify";
@@ -13,87 +7,51 @@ import { useNavigate } from "react-router-dom";
 export default function CheckoutForm() {
   const token = useEcomStore((state) => state.token);
   const clearCart = useEcomStore((state) => state.clearCart);
-  // *** 1. เพิ่ม: ดึงฟังก์ชัน getProduct มาใช้ ***
-  const getProduct = useEcomStore((state) => state.getProduct); 
-  // *****************************************
-
+  const getProduct = useEcomStore((state) => state.getProduct);
   const navigate = useNavigate();
 
-  const stripe = useStripe();
-  const elements = useElements();
-
-  const [message, setMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
     setIsLoading(true);
 
-    const payload = await stripe.confirmPayment({
-      elements,
-      redirect: "if_required",
-    });
-
-    console.log("payload", payload);
-    if (payload.error) {
-      setMessage(payload.error.message);
-      console.log("error");
-      toast.error(payload.error.message);
-    } else if (payload.paymentIntent.status === "succeeded") {
-      console.log("Ready or Saveorder");
-      // Create Order
-      saveOrder(token, payload)
+    try {
+      await saveOrder(token, {})
         .then((res) => {
           console.log(res);
           clearCart();
-
-          // *** 2. เพิ่ม: สั่งโหลดสินค้าใหม่ทันทีหลังสั่งซื้อสำเร็จ ***
-          getProduct(100); // ใส่จำนวนสินค้าที่ต้องการโหลด (เช่น 100)
-          // *************************************************
-
-          toast.success("Payment Success!!!");
+          getProduct(100);
+          toast.success("สั่งซื้อสำเร็จ!");
           navigate("/user/history");
         })
         .catch((err) => {
           console.log(err);
+          toast.error("เกิดข้อผิดพลาดในการสั่งซื้อ");
         });
-    } else {
-      console.log("Something wrong!!!");
-      toast.warning("ชำระเงินไม่สำเร็จ");
+    } catch (error) {
+      console.error(error);
+      toast.error("เกิดข้อผิดพลาด");
     }
 
     setIsLoading(false);
   };
 
-  const paymentElementOptions = {
-    layout: "tabs",
-  };
-
   return (
-    <>
-      <form className="space-y-6" id="payment-form" onSubmit={handleSubmit}>
-        <PaymentElement id="payment-element" options={paymentElementOptions} />
+    <form className="space-y-6" onSubmit={handleSubmit}>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold mb-4">ยืนยันการสั่งซื้อ</h3>
+        <p className="text-gray-600 mb-4">
+          กดปุ่มด้านล่างเพื่อยืนยันการสั่งซื้อสินค้า
+        </p>
         <button
-          className="stripe-button"
-          disabled={isLoading || !stripe || !elements}
-          id="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+          disabled={isLoading}
+          type="submit"
         >
-          <span id="button-text">
-            {isLoading ? (
-              <div className="spinner" id="spinner"></div>
-            ) : (
-              "Pay now"
-            )}
-          </span>
+          {isLoading ? "กำลังดำเนินการ..." : "ยืนยันการสั่งซื้อ"}
         </button>
-        {/* Show any error or success messages */}
-        {message && <div id="payment-message">{message}</div>}
-      </form>
-    </>
+      </div>
+    </form>
   );
 }

@@ -64,7 +64,6 @@ const ChatbotWidget = () => {
     console.log("Chat Session ID:", newSessionId);
   }, []);
 
-  // ✅ ทุกครั้งที่ messages เปลี่ยน ให้เลื่อนลงล่างสุด
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -118,7 +117,7 @@ const ChatbotWidget = () => {
         ...prev,
         {
           from: "bot",
-          text: "❌ เกิดข้อผิดพลาดในการเชื่อมต่อ",
+          text: "เกิดข้อผิดพลาดในการเชื่อมต่อ",
         },
       ]);
     } finally {

@@ -74,23 +74,39 @@ const SearchCart = () => {
     setTimeout(() => setOk(!ok), 300);
   };
 
-  // Handler สำหรับพิมพ์ Min
+  // Handler สำหรับพิมพ์ Min - ดักเฉพาะตัวเลข
   const handleMinInput = (e) => {
-    const val = parseInt(e.target.value) || 0;
+    const value = e.target.value;
+    // อนุญาตเฉพาะตัวเลข
+    if (!/^\d*$/.test(value)) return;
+    
+    const val = parseInt(value) || 0;
     setMinInput(val);
     const newMax = Math.max(val, maxInput);
     setPrice([val, newMax]);
     setMaxInput(newMax);
+  };
+
+  // เมื่อออกจาก input ให้ค้นหา
+  const handleMinBlur = () => {
     setTimeout(() => setOk(!ok), 300);
   };
 
-  // Handler สำหรับพิมพ์ Max
+  // Handler สำหรับพิมพ์ Max - ดักเฉพาะตัวเลข
   const handleMaxInput = (e) => {
-    const val = parseInt(e.target.value) || 0;
+    const value = e.target.value;
+    // อนุญาตเฉพาะตัวเลข
+    if (!/^\d*$/.test(value)) return;
+    
+    const val = parseInt(value) || 0;
     setMaxInput(val);
     const newMin = Math.min(val, minInput);
     setPrice([newMin, val]);
     setMinInput(newMin);
+  };
+
+  // เมื่อออกจาก input ให้ค้นหา
+  const handleMaxBlur = () => {
     setTimeout(() => setOk(!ok), 300);
   };
 
@@ -162,23 +178,27 @@ const SearchCart = () => {
         {/* Input Min/Max */}
         <div className="flex gap-2 mb-4">
           <div className="flex-1">
-            <label className="text-xs text-gray-600">Min</label>
+            <label className="text-xs text-gray-600 block mb-1">ราคาต่ำสุด</label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               className="border rounded-md px-2 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={minInput}
               onChange={handleMinInput}
-              min={0}
+              onBlur={handleMinBlur}
+              placeholder="0"
             />
           </div>
           <div className="flex-1">
-            <label className="text-xs text-gray-600">Max</label>
+            <label className="text-xs text-gray-600 block mb-1">ราคาสูงสุด</label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               className="border rounded-md px-2 py-1.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={maxInput}
               onChange={handleMaxInput}
-              min={0}
+              onBlur={handleMaxBlur}
+              placeholder="50000"
             />
           </div>
         </div>
