@@ -5,13 +5,17 @@ import { Clock, User, Calendar, CreditCard, FileSearch } from "lucide-react"; //
 import { numberFormat } from "../../utils/number"; // เรียกใช้ function จัดการตัวเลข (ถ้ามี)
 // หรือถ้าไม่มี numberFormat ให้ใช้ .toLocaleString() เหมือนเดิมได้ครับ
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
 const PendingOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get("http://localhost:5001/api/order/pending");
+      const res = await api.get("/order/pending");
       setOrders(res.data);
     } catch (err) {
       console.error("Error fetching pending orders:", err);

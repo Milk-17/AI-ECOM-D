@@ -6,7 +6,7 @@ const router = express.Router ();
 // Import controllers
 const { changeOrderStatus,getOrderAdmin , getOrderStats , getAdminLogs} = require('../controllers/admin')
 
-// Enpoint http://localhost:5001/api/admin
+// Enpoint http://103.91.205.96:5001/api/admin
 router.put('/admin/order-status',authCheck,changeOrderStatus);
 router.get('/admin/orders',authCheck,getOrderAdmin);
 router.get('/admin/order-stats',authCheck,getOrderStats);

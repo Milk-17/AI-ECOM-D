@@ -4,6 +4,10 @@ import { toast } from "react-toastify";
 import { Link } from "react-router-dom"; // อย่าลืม import Link
 import { Mail, ArrowLeft, Loader2, KeyRound } from "lucide-react"; // ใช้ Icon สวยๆ
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false); // เพิ่ม Loading State
@@ -13,7 +17,7 @@ const ForgotPassword = () => {
     setLoading(true); // เริ่มโหลด
     try {
       // ยิงไปที่ Backend (ต้องแน่ใจว่า path ถูกต้อง)
-      const res = await axios.post("http://localhost:5001/api/forgot-password", { email });
+     const res = await api.post("/forgot-password", { email });
       toast.success(res.data.message || "ลิงก์รีเซ็ตรหัสผ่านถูกส่งไปยังอีเมลแล้ว (Reset link sent!)");
       setEmail(""); // เคลียร์ช่อง
     } catch (err) {

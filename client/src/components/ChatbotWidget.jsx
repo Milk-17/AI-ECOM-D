@@ -48,7 +48,7 @@ const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([
-    { from: "bot", text: "สวัสดีครับ 👋 มีอะไรให้ช่วยไหมครับ? สอบถามเรื่องสเปคคอมได้เลย" },
+    { from: "bot", text: "สวัสดีครับ มีอะไรให้ช่วยไหมครับ? สอบถามเรื่องสเปคคอมได้เลย" },
   ]);
   const [isSending, setIsSending] = useState(false);
 
@@ -70,7 +70,7 @@ const ChatbotWidget = () => {
     }
   }, [messages]);
 
-  const N8N_WEBHOOK_URL = "https://balmlike-unblinking-arie.ngrok-free.dev/webhook/chat";
+  const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
   const toggleChat = () => {
     setIsOpen((prev) => !prev);
@@ -98,8 +98,14 @@ const ChatbotWidget = () => {
         }),
       });
 
-      if (!res.ok) {
-        throw new Error("Network response was not ok");
+      //if (!res.ok) {
+      //  throw new Error("Network response was not ok");
+     // }
+     if (!res.ok) {
+      console.error("Server Error:", res.status, res.statusText); // ดูตรงนี้ใน Console
+      const text = await res.text(); // ดูข้อความที่ Server ด่ากลับมา
+      console.error("Server Response:", text);
+      throw new Error(`Network response was not ok: ${res.status}`);
       }
 
       const data = await res.json();

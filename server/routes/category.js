@@ -18,7 +18,7 @@ const { authCheck, adminCheck } = require('../middlewares/authCheck');
 
 
 // --- Routes for Main Category ---
-// Enpoint http://localhost:5001/api/category
+// Enpoint http://103.91.205.96:5001/api/category
 router.post('/category', authCheck, adminCheck, createCategory);
 router.get('/category', listCategories);
 router.put('/category/:id', authCheck, adminCheck, updateCategory);
@@ -28,13 +28,13 @@ EXAMPLE:
 // --- Routes for SubCategory ---
 // (เพิ่มส่วนนี้เข้ามาใหม่ทั้งหมด)
 
-// Enpoint http://localhost:5001/api/subcategory
+// Enpoint http://103.91.205.96:5001/api/subcategory
 router.post('/subcategory', authCheck, adminCheck, createSubCategory);
 
-// Enpoint http://localhost:5001/api/subcategories (ใช้ /subcategories เพื่อดึงทั้งหมด)
+// Enpoint http://103.91.205.96:5001/api/subcategories (ใช้ /subcategories เพื่อดึงทั้งหมด)
 router.get('/subcategories', listSubCategories); 
 
-// Enpoint http://localhost:5001/api/subcategory/:id
+// Enpoint http://103.91.205.96:5001/api/subcategory/:id
 router.put('/subcategory/:id', authCheck, adminCheck, updateSubCategory);
 router.delete('/subcategory/:id', authCheck, adminCheck, removeSubCategory);
 

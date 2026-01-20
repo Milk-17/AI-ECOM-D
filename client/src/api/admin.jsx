@@ -1,9 +1,11 @@
 import axios from "axios";
 
-// http://localhost:5001/api/admin/orders
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
 
 export const getOrdersAdmin = async (token) => {
-  return axios.get("http://localhost:5001/api/admin/orders", {
+  return api.get("/admin/orders", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -11,8 +13,8 @@ export const getOrdersAdmin = async (token) => {
 };
 
 export const changeOrderStatus = async (token, orderId, orderStatus , trackingNumber) => {
-  return axios.put(
-    "http://localhost:5001/api/admin/order-status",
+  return api.put(
+    "/admin/order-status",
     {
       orderId,
       orderStatus,
@@ -27,7 +29,7 @@ export const changeOrderStatus = async (token, orderId, orderStatus , trackingNu
 };
 
 export const getListAllUsers = async (token) => {
-  return axios.get("http://localhost:5001/api/users", {
+  return api.get("/users", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -35,7 +37,7 @@ export const getListAllUsers = async (token) => {
 };
 
 export const changeUserStatus = async (token, value) => {
-  return axios.post("http://localhost:5001/api/change-status", value, {
+  return api.post("/change-status", value, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -43,7 +45,7 @@ export const changeUserStatus = async (token, value) => {
 };
 
 export const changeUserRole = async (token, value) => {
-  return axios.post("http://localhost:5001/api/change-role", value, {
+  return api.post("/change-role", value, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -52,7 +54,7 @@ export const changeUserRole = async (token, value) => {
 
 
 export const getOrderAdminStats = async (token) => {
-  return await axios.get("http://localhost:5001/api/admin/order-stats", {
+  return await api.get("/admin/order-stats", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -60,7 +62,7 @@ export const getOrderAdminStats = async (token) => {
 };
 
 export const getAdminLogs = async (token) => {
-  return await axios.get("http://localhost:5001/api/admin/logs", {
+  return await api.get("/admin/logs", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -68,8 +70,8 @@ export const getAdminLogs = async (token) => {
 };
 
 export const updateTrackingNumber = async (token, orderId, trackingNumber) => {
-  return await axios.put(
-    `http://localhost:5001/api/order/tracking/${orderId}`,
+  return await api.put(
+    `/order/tracking/${orderId}`,
     { trackingNumber },
     {
       headers: {

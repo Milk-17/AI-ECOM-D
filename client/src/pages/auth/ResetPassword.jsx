@@ -4,6 +4,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
 const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -26,7 +30,7 @@ const ResetPassword = () => {
     setLoading(true); // เริ่มโหลด
     try {
       // ตรวจสอบ URL Backend ให้แน่ใจว่า Port 5001 ถูกต้อง
-      const res = await axios.post(`http://localhost:5001/api/reset-password/${token}`, { password });
+      const res = await api.post(`/reset-password/${token}`, { password });
       
       toast.success(res.data.message || "Password reset successful");
       navigate("/login");

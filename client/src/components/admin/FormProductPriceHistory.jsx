@@ -5,6 +5,10 @@ import { toast } from "react-toastify";
 import { Loader, History, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { numberFormat } from "../../utils/number";
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
 const FormProductPriceHistory = () => {
   const token = useEcomStore((state) => state.token);
   const [history, setHistory] = useState([]);
@@ -17,8 +21,8 @@ const FormProductPriceHistory = () => {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `http://localhost:5001/api/productpricehistory`,
+      const res = await api.get(
+        `/productpricehistory`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

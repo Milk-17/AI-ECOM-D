@@ -5,6 +5,10 @@ import { listCategory } from "../api/Category";
 import { listProduct, searchFilters } from "../api/product";
 import _ from "lodash";
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
 const ecomStore = (set, get) => ({
   user: null,
   token: null,
@@ -72,7 +76,7 @@ const ecomStore = (set, get) => ({
     }, 0);
   },
   actionLogin: async (form) => {
-    const res = await axios.post("http://localhost:5001/api/login", form);
+    const res = await api.post("/login", form);
     set({
       user: res.data.payload,
       token: res.data.token,

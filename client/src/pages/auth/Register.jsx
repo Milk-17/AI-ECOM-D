@@ -8,6 +8,10 @@ import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Lock, Mail, UserPlus, User } from "lucide-react"; // เพิ่ม User icon
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
 // --- Schema Validation (เพิ่ม name) ---
 const registerSchema = z
   .object({
@@ -52,7 +56,7 @@ const Register = () => {
     setLoading(true);
     try {
       // ส่ง name, email, password ไปหลังบ้าน
-      const res = await axios.post("http://localhost:5001/api/register", data);
+      const res = await api.post("/register", data);
 
       if (res.data.success) {
         toast.success(res.data.message);

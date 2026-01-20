@@ -47,7 +47,7 @@ npx prisma generate
 ### 3.4 รัน Server
 npm start
 
-✅ Server พร้อมใช้งาน: `http://localhost:5001`
+✅ Server พร้อมใช้งาน: `http://103.91.205.96:5001`
 
 
 ## 4️⃣ ตั้งค่า Client (React + Vite)
@@ -59,7 +59,7 @@ npm install lucide-react
 
 ### 4.2 สร้างไฟล์ .env ใน client/ (ถ้าต้องการ)
 
-VITE_API_URL="http://localhost:5001"
+VITE_API_URL="http://103.91.205.96:5001"
 
 ### 4.3 รัน Client (Development)
 
