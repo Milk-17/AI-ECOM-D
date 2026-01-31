@@ -18,24 +18,27 @@ const {
 } = require('../controllers/product');
 
 const { adminCheck, authCheck } = require('../middlewares/authCheck');
+const { validateProductCreate, validateProductUpdate } = require('../middlewares/validators');
 
-// Enpoint http://103.91.205.96:5001/api/product
-router.post('/product', authCheck, adminCheck, create);
+// ===== PRODUCT ROUTES =====
+// Endpoint http://103.91.205.96:5001/api/product
+
+// Public routes
 router.get('/products/:count', list);
 router.get('/product/:id', read);
-router.put('/product/:id', authCheck, adminCheck, update);
-router.delete('/product/:id', authCheck, adminCheck, remove);
 router.post('/productby', listby);
 router.post('/search/filters', searchFilters);
+
+// Admin routes (ต้องเป็น admin)
+router.post('/product', authCheck, adminCheck, validateProductCreate, create);
+router.put('/product/:id', authCheck, adminCheck, validateProductUpdate, update);
+router.delete('/product/:id', authCheck, adminCheck, remove);
 
 router.post('/images', authCheck, adminCheck, createImages);
 router.post('/removeimages', authCheck, adminCheck, removeImage);
 
+// Admin logs
 router.get('/product/admin/logs', authCheck, adminCheck, listAdminLogs);
-
-//  แก้ชื่อฟังก์ชันให้ตรงกับ controller
 router.get('/productpricehistory', authCheck, adminCheck, getAllProductPriceHistory);
-
-
 
 module.exports = router;

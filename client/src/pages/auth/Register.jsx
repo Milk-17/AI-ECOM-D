@@ -6,22 +6,27 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import zxcvbn from "zxcvbn";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff, Loader2, Lock, Mail, UserPlus, User } from "lucide-react"; // เพิ่ม User icon
+import { Eye, EyeOff, Loader2, Lock, Mail, UserPlus, User } from "lucide-react";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-// --- Schema Validation (เพิ่ม name) ---
+// --- Schema Validation (แปลไทย) ---
+// Backend requirement: password must have uppercase, lowercase, and numbers (8+ chars)
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
+
 const registerSchema = z
   .object({
-    name: z.string().min(2, { message: "ชื่อต้องมากกว่า 2 ตัวอักษร" }),
-    email: z.string().email({ message: "รูปแบบ Email ไม่ถูกต้อง" }),
-    password: z.string().min(8, { message: "Password ต้องมากกว่า 8 ตัวอักษร" }),
+    name: z.string().min(2, { message: "ชื่อต้องมีความยาวอย่างน้อย 2 ตัวอักษร" }),
+    email: z.string().email({ message: "รูปแบบอีเมลไม่ถูกต้อง" }),
+    password: z.string()
+      .min(8, { message: "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร" })
+      .regex(passwordRegex, { message: "รหัสผ่านต้องมีอักษรพิมพ์ใหญ่ พิมพ์เล็ก และตัวเลข" }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Password ไม่ตรงกัน",
+    message: "รหัสผ่านไม่ตรงกัน",
     path: ["confirmPassword"],
   });
 
@@ -55,17 +60,16 @@ const Register = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      // ส่ง name, email, password ไปหลังบ้าน
       const res = await api.post("/register", data);
 
       if (res.data.success) {
-        toast.success(res.data.message);
+        toast.success(res.data.message); // สมมติว่า Backend ส่ง message มา หรือจะแก้เป็น "ลงทะเบียนสำเร็จ" ก็ได้
         setTimeout(() => {
           navigate("/login");
         }, 1500);
       }
     } catch (err) {
-      const errMsg = err.response?.data?.message || "Something went wrong";
+      const errMsg = err.response?.data?.message || "เกิดข้อผิดพลาดในการลงทะเบียน";
       toast.error(errMsg);
       console.log(err);
     } finally {
@@ -84,13 +88,14 @@ const Register = () => {
     }
   };
 
+  // แปลระดับความปลอดภัยของรหัสผ่าน
   const getStrengthText = () => {
     switch (passwordScore) {
       case 0:
-      case 1: return "Very Weak";
-      case 2: return "Weak";
-      case 3: return "Good";
-      case 4: return "Strong";
+      case 1: return "อ่อนมาก"; // Very Weak
+      case 2: return "อ่อน"; // Weak
+      case 3: return "ปานกลาง"; // Good
+      case 4: return "ดีมาก"; // Strong
       default: return "";
     }
   };
@@ -106,20 +111,20 @@ const Register = () => {
                 <UserPlus className="w-8 h-8 text-blue-600" />
              </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800">Create Account</h1>
-          <p className="text-gray-500 text-sm">Join us today! Enter your details below.</p>
+          <h1 className="text-3xl font-bold text-gray-800">สร้างบัญชีผู้ใช้</h1>
+          <p className="text-gray-500 text-sm">สมัครสมาชิกวันนี้! กรอกข้อมูลของคุณด้านล่าง</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           
-          {/* ✅ Name Input (เพิ่มใหม่) */}
+          {/* Name Input */}
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Name</label>
+            <label className="text-sm font-medium text-gray-700">ชื่อ-นามสกุล</label>
             <div className="relative">
                 <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <input
                 {...register("name")}
-                placeholder="Your Name"
+                placeholder="กรอกชื่อของคุณ"
                 className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors
                     ${errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-300"}`}
                 />
@@ -131,7 +136,7 @@ const Register = () => {
 
           {/* Email Input */}
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Email Address</label>
+            <label className="text-sm font-medium text-gray-700">อีเมล</label>
             <div className="relative">
                 <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <input
@@ -148,13 +153,13 @@ const Register = () => {
 
           {/* Password Input */}
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Password</label>
+            <label className="text-sm font-medium text-gray-700">รหัสผ่าน</label>
             <div className="relative">
                 <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <input
                 {...register("password")}
                 type={showPassword ? "text" : "password"}
-                placeholder="Create a password"
+                placeholder="ตั้งรหัสผ่าน"
                 className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors
                     ${errors.password ? "border-red-500 focus:ring-red-500" : "border-gray-300"}`}
                 />
@@ -174,7 +179,7 @@ const Register = () => {
             {watch().password?.length > 0 && (
                 <div className="mt-2">
                     <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-gray-500">Strength</span>
+                        <span className="text-xs text-gray-500">ความปลอดภัย</span>
                         <span className="text-xs font-medium text-gray-700">{getStrengthText()}</span>
                     </div>
                     <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
@@ -189,13 +194,13 @@ const Register = () => {
 
           {/* Confirm Password Input */}
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Confirm Password</label>
+            <label className="text-sm font-medium text-gray-700">ยืนยันรหัสผ่าน</label>
             <div className="relative">
                 <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <input
                 {...register("confirmPassword")}
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your password"
+                placeholder="กรอกรหัสผ่านอีกครั้ง"
                 className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors
                     ${errors.confirmPassword ? "border-red-500 focus:ring-red-500" : "border-gray-300"}`}
                 />
@@ -220,19 +225,19 @@ const Register = () => {
           >
             {loading ? (
                 <>
-                    <Loader2 className="animate-spin mr-2" size={20} /> Registering...
+                    <Loader2 className="animate-spin mr-2" size={20} /> กำลังลงทะเบียน...
                 </>
             ) : (
-                "Create Account"
+                "สมัครสมาชิก"
             )}
           </button>
         </form>
 
         {/* Footer */}
         <div className="text-center text-sm text-gray-500 mt-4">
-            Already have an account?{" "}
+            มีบัญชีอยู่แล้วใช่ไหม?{" "}
             <Link to="/login" className="text-blue-600 hover:underline font-medium">
-                Log in
+                เข้าสู่ระบบ
             </Link>
         </div>
 

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import useEcomStore from "../../store/ecom-store";
 import { updateUserProfile, changePassword } from "../../api/user";
 import { toast } from "react-toastify";
-import { User, Mail, Edit2, Save, MapPin, History, X, CheckCircle, Lock, Key } from "lucide-react";
+import { User, Mail, Edit2, Save, MapPin, History, X, CheckCircle, Lock, Key, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import moment from "moment/min/moment-with-locales";
 
@@ -42,6 +42,9 @@ const UserProfile = () => {
   });
   const [isChangePassword, setIsChangePassword] = useState(false); // เปิด/ปิด Card เปลี่ยนรหัส
   const [loadingPass, setLoadingPass] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 
   // Sync Data
@@ -266,13 +269,20 @@ const UserProfile = () => {
                         <div className="relative">
                             <Key size={16} className="absolute top-3 left-3 text-gray-400"/>
                             <input 
-                                type="password" 
+                                type={showCurrentPassword ? "text" : "password"}
                                 name="currentPassword"
                                 placeholder="รหัสผ่านปัจจุบัน"
                                 value={passwordData.currentPassword}
                                 onChange={handleChangePassword}
-                                className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full border border-gray-300 rounded-lg pl-10 pr-10 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -280,25 +290,39 @@ const UserProfile = () => {
                             <div className="relative">
                                 <Lock size={16} className="absolute top-3 left-3 text-gray-400"/>
                                 <input 
-                                    type="password" 
+                                    type={showNewPassword ? "text" : "password"}
                                     name="newPassword"
                                     placeholder="รหัสผ่านใหม่"
                                     value={passwordData.newPassword}
                                     onChange={handleChangePassword}
-                                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full border border-gray-300 rounded-lg pl-10 pr-10 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
                             {/* ยืนยันรหัสผ่าน */}
                             <div className="relative">
                                 <Lock size={16} className="absolute top-3 left-3 text-gray-400"/>
                                 <input 
-                                    type="password" 
+                                    type={showConfirmPassword ? "text" : "password"}
                                     name="confirmPassword"
                                     placeholder="ยืนยันรหัสผ่านใหม่"
                                     value={passwordData.confirmPassword}
                                     onChange={handleChangePassword}
-                                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full border border-gray-300 rounded-lg pl-10 pr-10 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
                         </div>
 

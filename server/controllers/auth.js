@@ -7,22 +7,30 @@ const crypto = require('crypto');
 
 
 exports.register = async(req,res) => {
-    //Code
     try{
-        //code
         const { email, password , name} = req.body
-       
-
-        // 1 Validate body
-        if(!email){
-            //Code
-            return res.status(400).json({ message : 'Email is required!!!!'});
+        
+        // 1 Validate Input
+        if (!email || !password || !name) {
+            return res.status(400).json({ message : "กรุณากรอกข้อมูลให้ครบถ้วน" });
         }
-        if(!password){
-            //code
-            return res.status(400).json({ message : 'Password is required!!!'});
+        
+        // 1.1 Validate Email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message : "รูปแบบอีเมลไม่ถูกต้อง" });
         }
-
+        
+        // 1.2 Validate Name length
+        if (name.trim().length < 2) {
+            return res.status(400).json({ message : "ชื่อต้องมีความยาวอย่างน้อย 2 ตัวอักษร" });
+        }
+        
+        // 1.3 Validate Password length
+        if (password.length < 8) {
+            return res.status(400).json({ message : "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร" });
+        }
+        
         // 2 Check Email in DB already ?
         const user = await prisma.user.findFirst({
             where:{
@@ -30,13 +38,13 @@ exports.register = async(req,res) => {
             }
         }) 
         if(user){
-            return res.status(400).json({ message : "Email already Exits!!!"});
+            return res.status(400).json({ message : "Email นี้มีอยู่ในระบบแล้ว"});
         }
         
-        // 3 HashPassword
+        // 3 Hash Password
         const hashPassword = await bcrypt.hash(password,10);
         
-        // 4 Register Name
+        // 4 Create User
         await prisma.user.create({
           data : {
             email : email,
@@ -45,61 +53,57 @@ exports.register = async(req,res) => {
           }
         })
 
-        res.status(201).json({ success: true, message: "Register Success" });
+        res.status(201).json({ success: true, message: "ลงทะเบียนสำเร็จ" });
     }catch (err) {
-        //Error
-        console.log (err);
-        res.status(500).json({ message : "Server Error" })   
+        // 🔒 ไม่ log full error ให้ client เห็น
+        console.error('Register error:', err.message);
+        res.status(500).json({ message : "เกิดข้อผิดพลาดในการลงทะเบียน" })   
     }
 
 }
 
 exports.login = async(req,res) => { 
     try{
-        //code
         const { email,password } = req.body
 
         // 1 Check Email
-            const user = await prisma.user.findFirst({
-                where : {email : email}
-            })
-            if(!user || !user.enable) {
-                return res.status(400).json({ message : 'User Not found or not Enabled'});
-            }
+        const user = await prisma.user.findFirst({
+            where : {email : email}
+        })
+        if(!user || !user.enable) {
+            return res.status(400).json({ message : 'ไม่พบผู้ใช้หรือบัญชีถูกปิดใช้งาน'});
+        }
         // 2 Check password
-            const isMatch = await bcrypt.compare(password,user.password);
-            if(!isMatch){
-                return res.status(500).json({ message : 'Password Invalid!!!'});
-            }
-        // 3 Check Payload
+        const isMatch = await bcrypt.compare(password,user.password);
+        if(!isMatch){
+            return res.status(401).json({ message : 'รหัสผ่านไม่ถูกต้อง'});
+        }
+        // 3 Create Payload
         const payload = {
             id : user.id,
             email : user.email,
             role : user.role,
-            name: user.name, //  เพิ่มบรรทัดนี้ครับ! เพื่อส่งชื่อไปด้วย
-            picture: user.picture //  (แนะนำ) เพิ่มรูปไปด้วยเลย จะได้ไม่ต้องรอโหลด
-
+            name: user.name,
+            picture: user.picture
         } 
-        // 4 Generate Token //.env
-        jwt.sign(payload,process.env.SECRET,{expiresIn : '1d'},   
-            (err,token) =>{
+        // 4 Generate Token
+        jwt.sign(payload, process.env.SECRET, {expiresIn : '1d'},   
+            (err, token) => {
               if(err){
-                return res.status(500).json({ message : " Generate Token Error "})
+                console.error('Token generation error:', err.message);
+                return res.status(500).json({ message : "เกิดข้อผิดพลาด"})
               }  
-              res.json({payload,token});
-
+              res.json({payload, token});
             }) ;
         
     }catch (err) {
-        //Error
-        console.log (err);
-        res.status(500).json({ message : "Server Error" })   
+        console.error('Login error:', err.message);
+        res.status(500).json({ message : "เกิดข้อผิดพลาด" })   
     }
 }
 
 exports.currentUser = async (req,res) => {
     try {
-        //code
         // console.log(req.user);
         const user = await prisma.user.findUnique({
             where : { email: req.user.email},
@@ -114,8 +118,8 @@ exports.currentUser = async (req,res) => {
         res.json({ user });
        
     } catch (err){
-        //err
-        res.status(500).json({ message : "Sever Error" })
+        console.error('Current user error:', err.message);
+        res.status(500).json({ message : "เกิดข้อผิดพลาด" })
     }
 }
 
@@ -124,11 +128,10 @@ exports.forgotPassword = async (req, res) => {
     try {
       const { email } = req.body;
   
-      if (!email) return res.status(400).json({ message: "Email is required" });
-  
       const user = await prisma.user.findFirst({ where: { email } });
       if (!user) {
-        return res.status(400).json({ message: "User not found" });
+        // 🔒 ไม่บอก email exist หรือไม่ (ป้องกัน email enumeration)
+        return res.status(200).json({ message: "ถ้า email นี้มีอยู่ในระบบ ลิงก์รีเซ็ตจะถูกส่งไปแล้ว" });
       }
   
       // สร้าง token สำหรับ reset
@@ -146,49 +149,50 @@ exports.forgotPassword = async (req, res) => {
         }
       });
   
-      // สร้างลิงก์ reset
-      const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+      // สร้างลิงก์ reset - ใช้ dynamic URL ตามสภาพแวดล้อม
+      const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
   
       // ส่งอีเมล (ใช้ nodemailer)
       const transporter = nodemailer.createTransport({
-        service: "gmail", // คุณอาจเปลี่ยนเป็น SMTP ของ hosting/cloud
+        service: "gmail",
         auth: {
-          user: process.env.EMAIL_USER, // email ของคุณ
-          pass: process.env.EMAIL_PASS  // app password หรือ token
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
         }
       });
   
       await transporter.sendMail({
         from: `"Support" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: "Password Reset",
+        subject: "คำขอรีเซ็ตรหัสผ่าน",
         html: `
           <p>คุณได้ร้องขอรีเซ็ตรหัสผ่าน</p>
           <p>คลิกลิงก์ด้านล่างเพื่อรีเซ็ต (ภายใน 15 นาที):</p>
           <a href="${resetLink}">${resetLink}</a>
+          <p><strong>หมายเหตุ:</strong> ถ้าคุณไม่ได้ร้องขอนี้ ให้ละเว้นอีเมลนี้</p>
         `
       });
   
-      res.json({ message: "Reset link sent to email" });
+      // 🔒 ส่ง generic message กลับ (ไม่เปิดเผย email exist หรือไม่)
+      res.status(200).json({ message: "ถ้า email นี้มีอยู่ในระบบ ลิงก์รีเซ็ตจะถูกส่งไปแล้ว" });
   
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server Error" });
+      console.error('Forgot password error:', err.message);
+      res.status(500).json({ message: "เกิดข้อผิดพลาด" });
     }
   };
   
-  // -------------------- Reset Password --------------------
-  exports.resetPassword = async (req, res) => {
+// -------------------- Reset Password --------------------
+exports.resetPassword = async (req, res) => {
     try {
       const { token } = req.params;
       const { password } = req.body;
   
-      if (!password) return res.status(400).json({ message: "Password required" });
-  
       // หาผู้ใช้ที่มี resetToken (ต้องวนเช็คทุก user)
       const users = await prisma.user.findMany({
         where: {
-          resetToken: { not: null }
+          resetToken: { not: null },
+          resetTokenExpire: { gt: new Date() }  // ยังไม่หมดอายุ
         }
       });
   
@@ -196,7 +200,7 @@ exports.forgotPassword = async (req, res) => {
       let matchedUser = null;
       for (let u of users) {
         const isMatch = await bcrypt.compare(token, u.resetToken);
-        if (isMatch && u.resetTokenExpire > new Date()) {
+        if (isMatch) {
           matchedUser = u;
           break;
         }
@@ -221,7 +225,7 @@ exports.forgotPassword = async (req, res) => {
       res.json({ message: "Password has been reset successfully" });
   
     } catch (err) {
-      console.error(err);
+      console.error('Reset password error:', err.message);
       res.status(500).json({ message: "Server Error" });
     }
   };
@@ -239,7 +243,7 @@ exports.forgotPassword = async (req, res) => {
       });
       res.json({ user });
     } catch (err) {
-      console.log(err);
+      console.error('Current admin error:', err.message);
       res.status(500).json({ message: "Server Error" });
     }
   };
@@ -248,13 +252,6 @@ exports.forgotPassword = async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
       const userId = req.user.id; 
-      
-      // 🔍 1. Debug: ปริ้นดูว่าหน้าบ้านส่งอะไรมา (ลบออกได้หลังแก้เสร็จ)
-      console.log("Change Password Request:", { 
-          userId, 
-          currentPasswordReceived: currentPassword, 
-          newPasswordReceived: newPassword 
-      });
   
       const user = await prisma.user.findUnique({
         where: { id: userId }
@@ -264,25 +261,14 @@ exports.forgotPassword = async (req, res) => {
           return res.status(400).json({ message: "User not found" });
       }
   
-      //  2. Security Check: เพิ่มกฎความปลอดภัยรหัสผ่านใหม่
-      // ต้องมี: ตัวเล็ก, ตัวใหญ่, ตัวเลข, อักขระพิเศษ, ยาว 8 ตัวขึ้นไป
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/;
-      
-      if (!passwordRegex.test(newPassword)) {
-          return res.status(400).json({ 
-              message: "รหัสผ่านต้องมีอย่างน้อย 8 ตัว, อักษรใหญ่, เล็ก, ตัวเลข และอักขระพิเศษ (!@#$%^&*)" 
-          });
-      }
-  
-      // 3. เช็ครหัสเก่า
+      // 3. Check old password
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       
       if (!isMatch) {
-        // ถ้า Error ตรงนี้ ให้ดูที่ Console ว่า currentPasswordReceived ตรงกับที่คุณพิมพ์ไหม
-        return res.status(400).json({ message: "รหัสผ่านเดิมไม่ถูกต้อง" });
+        return res.status(400).json({ message: "Current password is incorrect" });
       }
   
-      // 4. Hash และบันทึก
+      // 4. Hash and save new password
       const hashNewPassword = await bcrypt.hash(newPassword, 10);
   
       await prisma.user.update({
@@ -292,10 +278,10 @@ exports.forgotPassword = async (req, res) => {
         }
       });
   
-      res.json({ message: "เปลี่ยนรหัสผ่านสำเร็จ" });
+      res.json({ message: "Password changed successfully" });
   
     } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: "Server Error Change Password" });
+      console.error('Change password error:', err.message);
+      res.status(500).json({ message: "Server Error" });
     }
   };

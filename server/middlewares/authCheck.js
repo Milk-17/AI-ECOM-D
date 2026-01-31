@@ -5,7 +5,8 @@ exports.authCheck = async (req,res,next) => {
     try {
         //code
         const headerToken = req.headers.authorization
-        console.log(headerToken)
+        // 🔒 REMOVED: console.log(headerToken) - ไม่ log auth header
+
         if(!headerToken){
             return res.status(401).json({ message: 'No token ,authorization'})
         }
@@ -24,7 +25,8 @@ exports.authCheck = async (req,res,next) => {
         }
         next()
     } catch (err){
-        console.log(err)
+        // 🔒 SECURITY: ไม่ log error details ให้ client เห็น
+        console.error('Auth verification failed:', err.message); // Log เฉพาะ message
         res.status(500).json({ message: "Token in Valid Error"})
     }
 }
@@ -43,7 +45,7 @@ exports.adminCheck = async (req,res,next) =>{
         //console.log('admin check',adminUser)
         next()
     }catch(err){
-        console.log(err)
+        console.error('Admin check failed:', err.message); // 🔒 ไม่ log full error
         res.status(500).json({message : 'Admin access deied middlewares'})
     }
 }

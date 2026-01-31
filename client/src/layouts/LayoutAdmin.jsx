@@ -5,18 +5,17 @@ import HeaderAdmin from '../components/admin/HeaderAdmin'
 
 const LayoutAdmin = () => {
   return (
-    <div className='flex h-screen'>
+    <div className='flex h-screen bg-gray-50'>
          <SideberAdmin />
 
          <div className='flex-1 flex flex-col'>        
          <HeaderAdmin />
 
-         <main className='flex-1 p-4 bg-gray-400 overflow-y-auto'>
+         <main className='flex-1 p-6 bg-gradient-to-br from-gray-50 via-slate-50 to-blue-50 overflow-y-auto'>
          <Outlet />
          </main>
          </div>
     </div>
-   
   )
 }
 
