@@ -86,8 +86,8 @@ exports.login = async(req,res) => {
             name: user.name,
             picture: user.picture
         } 
-        // 4 Generate Token
-        jwt.sign(payload, process.env.SECRET, {expiresIn : '1d'},   
+        // 4 Generate Token (หมดอายุใน 30 นาที)
+        jwt.sign(payload, process.env.SECRET, {expiresIn : '30m'},   
             (err, token) => {
               if(err){
                 console.error('Token generation error:', err.message);

@@ -15,23 +15,45 @@ const App = () => {
   const token = useEcomStore((state) => state.token);
   const clearStore = useEcomStore((state) => state.logout);
 
-  // <--- 4. ใส่ Logic เช็ควันหมดอายุที่นี่
+  // <--- 4. Idle Timeout: ถ้าไม่ทำ activity เกิน 30 นาที จะ logout
   useEffect(() => {
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        const currentTime = Date.now() / 1000;
+    if (!token) return; // ถ้าไม่มี token ไม่ต้องเช็ก
 
-        if (decoded.exp < currentTime) {
-          // ถ้าหมดอายุ -> สั่ง Logout ทันที
-          clearStore(); 
-          console.log("Token expired, Auto Logout");
-        }
-      } catch (error) {
-        // ถ้า Token พังหรือแกะไม่ได้ -> สั่ง Logout กันเหนียว
-        clearStore();
+    let idleTimer;
+    const IDLE_TIME = 30 * 60 * 1000; // 30 นาที (milliseconds)
+
+    // ฟังก์ชัน: ตั้งค่า timer ใหม่
+    const resetIdleTimer = () => {
+      if (idleTimer) {
+        clearTimeout(idleTimer);
       }
-    }
+      
+      // ตั้ง timer ใหม่ - ถ้าไม่มี activity 30 นาที → logout
+      idleTimer = setTimeout(() => {
+        clearStore();
+        console.log("Idle timeout: User logged out due to inactivity");
+      }, IDLE_TIME);
+    };
+
+    // ตั้งค่า timer เมื่อ component mount
+    resetIdleTimer();
+
+    // ฟังก์ชัน: สำหรับ events ที่บ่งชี้ user กำลัง active
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    
+    events.forEach(event => {
+      window.addEventListener(event, resetIdleTimer);
+    });
+
+    // Clean up: ลบ event listeners และ clear timer
+    return () => {
+      if (idleTimer) {
+        clearTimeout(idleTimer);
+      }
+      events.forEach(event => {
+        window.removeEventListener(event, resetIdleTimer);
+      });
+    };
   }, [token, clearStore]);
 
 

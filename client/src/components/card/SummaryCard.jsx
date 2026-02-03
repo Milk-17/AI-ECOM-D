@@ -148,7 +148,7 @@ const SummaryCard = () => {
     }
     saveOrder(token, { addressId: selectedAddressId }) 
       .then((res) => {
-        toast.success(res.data.message || "Order placed successfully");
+        toast.success(res.data.message || "สั่งซื้อเรียบร้อยแล้ว");
         clearCart(); 
         navigate("/user/history");
       })
