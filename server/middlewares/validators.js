@@ -64,7 +64,8 @@ exports.validateResetPassword = [
     .matches(passwordPattern)
     .withMessage('รหัสผ่านต้องมีอักษรพิมพ์ใหญ่ พิมพ์เล็ก และตัวเลข'),
   body('confirmPassword')
-    .custom((value, { req }) => value === req.body.password)
+    .optional()
+    .custom((value, { req }) => !value || value === req.body.password)
     .withMessage('รหัสผ่านไม่ตรงกัน'),
   handleValidationErrors
 ];
@@ -79,7 +80,8 @@ exports.validateChangePassword = [
     .matches(passwordPattern)
     .withMessage('รหัสผ่านต้องมีอักษรพิมพ์ใหญ่ พิมพ์เล็ก และตัวเลข'),
   body('confirmPassword')
-    .custom((value, { req }) => value === req.body.newPassword)
+    .optional()
+    .custom((value, { req }) => !value || value === req.body.newPassword)
     .withMessage('รหัสผ่านไม่ตรงกัน'),
   handleValidationErrors
 ];

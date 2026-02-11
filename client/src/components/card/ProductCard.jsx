@@ -29,64 +29,74 @@ const ProductCard = ({ item, showTitle = true }) => {
       transition={{ duration: 0.2 }}
       className="h-[300px]"
     >
-      <div className="border rounded-md shadow-md p-2 w-full h-full flex flex-col bg-white hover:shadow-lg transition-shadow duration-300">
-        
-        {/* --- ส่วนเนื้อหาด้านบน (รูป + ข้อความ) --- */}
-        <div className="flex flex-col gap-1">
-            
+      <div className="h-full px-2 pb-10">
+        <div className="border rounded-md shadow-md p-2 w-full h-full flex flex-col bg-white hover:shadow-lg transition-shadow duration-300">
+
+          {/* --- ส่วนเนื้อหาด้านบน (รูป + ข้อความ) --- */}
+          <div className="flex flex-col gap-1">
+
             {/* รูปภาพ */}
-            <div className="w-full h-28 overflow-hidden rounded-md relative bg-gray-200"> 
-                {item.images && item.images.length > 0 ? (
-                    <Link to={linkPath} className="w-full h-full block">
-                        <img
-                            src={item.images[0].url}
-                            alt={item.title}
-                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                        />
-                    </Link>
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500">
-                        No Image
-                    </div>
-                )}
+            <div className="w-full h-28 overflow-hidden rounded-md relative bg-gray-200">
+              {item.images && item.images.length > 0 ? (
+                <Link to={linkPath} className="w-full h-full block">
+                  <img
+                    src={item.images[0].url}
+                    alt={item.title}
+                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';
+                    }}
+                  />
+                </Link>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-500">
+                  No Image
+                </div>
+              )}
             </div>
 
             {/* ชื่อสินค้า */}
             <div className="py-0.5">
-                {showTitle && (
-                    <Link to={linkPath}>
-                        <h2 className="text-xs font-semibold line-clamp-2 hover:text-blue-600 cursor-pointer h-8 overflow-hidden" title={item.title}>
-                            {item.title}
-                        </h2>
-                    </Link>
-                )}
+              {showTitle && (
+                <Link to={linkPath}>
+                  <h2 className="text-xs font-semibold line-clamp-2 hover:text-blue-600 cursor-pointer h-8 overflow-hidden" title={item.title}>
+                    {item.title}
+                  </h2>
+                </Link>
+              )}
             </div>
-        </div>
+          </div>
 
-        {/* --- ส่วนด้านล่าง (ราคา + ปุ่ม) --- */}
-        <div className="mt-auto pt-1.5 flex justify-between items-center border-t">
-          <span className="text-sm font-bold text-blue-600">
-            {numberFormat(item.price)}
-          </span>
-          
-          <button
-            disabled={item.quantity < 1}
-            onClick={() => actionAddtoCart(item)}
-            className={`p-1.5 rounded-md shadow-md transition-all ${
-                item.quantity < 1 
-                ? "bg-gray-300 cursor-not-allowed" 
+          {/* --- ส่วนด้านล่าง (ราคา + ปุ่ม) --- */}
+          <div className="mt-auto pt-1.5 flex justify-between items-center border-t">
+            <span className="text-sm font-bold text-blue-600">
+              {numberFormat(item.price)}
+            </span>
+
+            <button
+              disabled={item.quantity < 1}
+              onClick={(e) => {
+                e.preventDefault();   // 1. ป้องกัน Link (ถ้ามีครอบอยู่) ไม่ให้ทำงาน
+                e.stopPropagation();  // 2.  สำคัญมาก! บอก Swiper ว่า "อย่ามายุ่ง" กับปุ่มนี้
+                actionAddtoCart(item); // 3. เรียกฟังก์ชันเพิ่มสินค้า
+              }}
+              // เพิ่ม z-10 relative เพื่อให้มั่นใจว่าปุ่มลอยอยู่เหนือ Layer ของ Swiper
+              className={`p-1.5 rounded-md shadow-md transition-all relative z-50 cursor-pointer ${item.quantity < 1
+                ? "bg-gray-300 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-800 text-white"
-            }`}
-          >
-            {item.quantity < 1 ? (
+                }`}
+            >
+              {item.quantity < 1 ? (
                 <span className="text-xs font-bold px-1.5">หมด</span>
-            ) : (
+              ) : (
                 <ShoppingCart size={16} />
-            )}
-          </button>
+              )}
+            </button>
+          </div>
         </div>
-
       </div>
+
     </motion.div>
   );
 };

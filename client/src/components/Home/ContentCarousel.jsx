@@ -42,14 +42,15 @@ const ContentCarousel = () => {
           // ----------- แก้ไขจุดที่ 2: บังคับให้ Slide สูงเต็มพื้นที่ Container -----------
           <SwiperSlide key={i} className="h-full">
             <img
-              // ----------- แก้ไขจุดที่ 3: ปรับการแสดงผลรูปภาพ -----------
-              // h-full w-full: ให้รูปขยายเต็มกรอบ Slide
-              // object-contain: สำคัญมากสำหรับโลโก้! มันจะทำให้เห็นโลโก้ทั้งอันโดยไม่โดนตัดขอบ (แต่อาจจะมีพื้นที่ว่างเหลือด้านข้างหรือด้านบนล่างบ้าง)
-              // ถ้าใช้ object-cover (แบบเดิม) รูปจะเต็มกรอบเป๊ะ แต่โลโก้บางอันอาจจะโดนตัดหัวตัดหางครับ
               className="rounded-md w-full h-full object-contain bg-white" 
               src={item.download_url}
-              alt="banner"
+              alt={`Brand ${i + 1}`}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.style.display = 'none';
+              }}
             />
+              alt="banner"
           </SwiperSlide>
         ))}
       </Swiper>

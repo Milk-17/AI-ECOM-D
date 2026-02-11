@@ -101,7 +101,7 @@ const DashboardStats = () => {
       const pieData = [
         { name: 'รอตรวจสอบ (Pending)', value: calculated.pendingOrders, color: '#F59E0B' }, 
         { name: 'กำลังดำเนินการ (Processing)', value: calculated.processingOrders, color: '#3B82F6' },
-        { name: 'สำเร็จ (Completed)', value: calculated.completedOrders, color: '#10B981' },
+        { name: 'ดำเนินการสำเร็จ (Completed)', value: calculated.completedOrders, color: '#10B981' },
         { name: 'ยกเลิก (Cancelled)', value: orderList.filter(o => o.orderStatus === 'Cancelled').length, color: '#EF4444' }
       ];
       setStatusData(pieData.filter(item => item.value > 0));
@@ -164,14 +164,14 @@ const DashboardStats = () => {
                 textColor="text-yellow-700"
             />
             <StatCardSimple 
-                title="ดำเนินการ (Processing)" 
+                title="กำลังดำเนินการ (Processing)" 
                 value={stats.processingOrders} 
                 icon={<Package size={20} className="text-blue-600" />} 
                 bgColor="bg-blue-50 border-blue-200"
                 textColor="text-blue-700"
             />
             <StatCardSimple 
-                title="สำเร็จ (Completed)" 
+                title="ดำเนินการสำเร็จ (Completed)" 
                 value={stats.completedOrders} 
                 icon={<CheckCircle size={20} className="text-green-600" />} 
                 bgColor="bg-green-50 border-green-200"

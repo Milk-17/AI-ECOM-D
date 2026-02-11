@@ -245,63 +245,56 @@ exports.remove = async(req,res) => {
     }
 };
 
-// ===================== SEARCH / FILTER =====================
-const handleQuery = async(req,res,query) => {
-     try{
-    const products = await prisma.product.findMany({
-    where: { 
-                    title: { 
-                        contains: query
-                    } 
-                },
-    include: { category:true, subCategory:true, images:true }
-     });
-     res.send(products);
-     } catch (err){
-     console.log(err);
-     res.status(500).json({ message:"handleQuery Error"});
-     }
-    };
+// ===================== SEARCH / FILTER (UPDATED) =====================
 
-const handlePrice = async(req,res,priceRange) =>{
-    try{
+exports.searchFilters = async (req, res) => {
+    try {
+        // รับค่าจากหน้าบ้าน
+        const { query, category, price } = req.body; 
+
+        // 1. สร้าง Query Object เปล่าๆ ไว้รอรับเงื่อนไข
+        const where = {}; 
+
+        // 2. ถ้ามีการพิมพ์ค้นหา (Text Search)
+        if (query) {
+            where.title = {
+                contains: query,
+            };
+        }
+
+        // 3. ถ้ามีการเลือกหมวดหมู่ (Category)
+        // หมายเหตุ: ตรงนี้เช็คให้ดีว่าหน้าบ้านส่ง array ของ ID มา
+        if (category && category.length > 0) {
+            where.subCategoryId = {
+                in: category.map((id) => Number(id))
+            };
+        }
+
+        // 4. ถ้ามีการเลือกช่วงราคา (Price)
+        // เช็คว่ามีค่าส่งมา และเป็น Array ที่มี 2 ตัว [min, max]
+        if (price && price.length === 2) {
+            where.price = {
+                gte: price[0], // ราคามากกว่าหรือเท่ากับตัวแรก
+                lte: price[1]  // ราคาน้อยกว่าหรือเท่ากับตัวที่สอง
+            };
+        }
+
+        // 5.  สั่งค้นหาทีเดียว ด้วยเงื่อนไขที่มัดรวมกันแล้ว (INTERSECTION Logic)
         const products = await prisma.product.findMany({
-            where:{ price:{ gte: priceRange[0], lte: priceRange[1] } },
-            include:{ category:true, subCategory:true, images:true }
+            where: where, // ใส่ object ที่เรารวมร่างมา
+            include: {
+                category: true,
+                subCategory: true,
+                images: true
+            }
         });
+
+        // ส่งผลลัพธ์กลับไปทีเดียว
         res.send(products);
-    } catch (err){
-        console.log(err);
-        res.status(500).json({ message: "handlePrice Error"});
-    }
-};
 
-const handleCategory = async(req,res,categoryId) =>{
-     try{
-     const products = await prisma.product.findMany({
-     where:{ 
-                    subCategoryId: {  
-                        in: categoryId.map(id=> Number(id)) 
-                    } 
-                },
-     include:{ category:true, subCategory:true, images:true }
-     });
-     res.send(products);
-     } catch (err){
-     console.log(err);
-     res.status(500).json({ message: "handleCategory Error"});
-     }
-    };
-
-exports.searchFilters = async(req,res) =>{
-    try{
-        const { query, category, price } = req.body;
-        if(query) await handleQuery(req,res,query);
-        if(category) await handleCategory(req,res,category);
-        if(price) await handlePrice(req,res,price);
-    } catch (err){
+    } catch (err) {
         console.log(err);
-        res.status(500).json({ message : "searchFilters product controllers Error" })
+        res.status(500).json({ message: "Search Filters Error" });
     }
 };
 

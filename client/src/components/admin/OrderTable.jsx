@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { numberFormat } from "../../utils/number";
-import { Loader, MapPin, Edit2, Save, X } from "lucide-react";
+import { Loader, MapPin, Edit2, Save, X, ChevronDown, ChevronUp, Package, Phone, User } from "lucide-react";
 import { toast } from "react-toastify";
 import { updateTrackingNumber } from "../../api/admin";
 
@@ -31,6 +31,19 @@ const OrderTable = ({
 
   const [editingTrackingId, setEditingTrackingId] = useState(null);
   const [savingId, setSavingId] = useState(null);
+  const [expandedRows, setExpandedRows] = useState(new Set()); // Track expanded rows
+
+  const toggleRowExpansion = (orderId) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -117,132 +130,200 @@ const OrderTable = ({
         <tbody className="text-sm text-gray-600">
           {orders.length > 0 ? (
             orders.map((item, index) => (
-              <tr
-                key={item.id || index}
-                className="border-b hover:bg-gray-50 transition duration-150"
-              >
-                <td className="p-3 text-center">{index + 1}</td>
+              <React.Fragment key={item.id || index}>
+                <tr className="border-b hover:bg-gray-50 transition duration-150">
+                  <td className="p-3 text-center">{index + 1}</td>
 
-                <td className="p-3">
-                  {/* Security: ใช้ Optional Chaining (?) ป้องกัน Error กรณี user ถูกลบ */}
-                  <div className="font-bold text-gray-800">
-                    {item.orderedBy?.email || "Guest / Deleted User"}
-                  </div>
-
-                  {/* Correctness: แสดงที่อยู่จาก Snapshot (shippingAddress) ก่อนเสมอ */}
-                  <div
-                    className="text-xs text-gray-500 mt-1 max-w-[220px] truncate flex items-center gap-1"
-                    title={item.shippingAddress || item.orderedBy?.address}
-                  >
-                    <MapPin size={12} className="flex-shrink-0" />
-                    {item.shippingAddress || item.orderedBy?.address || "-"}
-                  </div>
-                </td>
-
-                <td className="p-3 text-center text-xs whitespace-nowrap">
-                  {formatDate(item.createdAt)}
-                </td>
-
-                <td className="p-3">
-                  <ul className="list-disc list-inside text-xs text-gray-700 space-y-1">
-                    {item.products?.map((product, idx) => (
-                      <li key={idx}>
-                        <span className="font-medium">
-                          {product.product?.title}
-                        </span>
-                        <span className="text-gray-500">
-                          {" "}
-                          ({product.count} x {numberFormat(product.price)})
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </td>
-
-                <td className="p-3 text-right font-bold text-blue-600 whitespace-nowrap">
-                  {numberFormat(item.cartTotal)}
-                </td>
-
-                {/* ✅ แก้ไขส่วนเลขพัสดุ */}
-                <td className="p-3 text-center">
-                  {editingTrackingId === item.id ? (
-                    // โหมดแก้ไข
-                    <div className="flex gap-2 justify-center items-center">
-                      <input
-                        className="border border-blue-400 rounded-md p-1.5 text-xs w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50"
-                        placeholder="ระบุเลขพัสดุ"
-                        onChange={(e) => handleTrackingInput(e, item.id)} //  ใช้ฟังก์ชันใหม่
-                        value={trackingInputs[item.id] || ""}
-                        autoFocus
-                      />
+                  <td className="p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <div className="font-bold text-gray-800">
+                          {item.orderedBy?.email || "Guest / Deleted User"}
+                        </div>
+                        <div
+                          className="text-xs text-gray-500 mt-1 max-w-[220px] truncate flex items-center gap-1"
+                          title={item.shippingAddress || item.orderedBy?.address}
+                        >
+                          <MapPin size={12} className="flex-shrink-0" />
+                          {item.shippingAddress || item.orderedBy?.address || "-"}
+                        </div>
+                      </div>
+                      
                       <button
-                        className={`${
-                          savingId === item.id
-                            ? "bg-gray-500"
-                            : "bg-green-500 hover:bg-green-600"
-                        } text-white p-1.5 rounded transition`}
-                        onClick={() => handleSaveTracking(item.id)} //  เรียก API
-                        title="บันทึก"
-                        disabled={savingId === item.id}
+                        onClick={() => toggleRowExpansion(item.id)}
+                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
+                        title="ดูรายละเอียดที่อยู่"
                       >
-                        <Save size={16} />
-                      </button>
-                      <button
-                        className="bg-gray-400 hover:bg-gray-500 text-white p-1.5 rounded transition"
-                        onClick={() => {
-                          setEditingTrackingId(null);
-                          handleTrackingChange(
-                            { target: { value: "" } },
-                            item.id
-                          );
-                        }}
-                        title="ยกเลิก"
-                      >
-                        <X size={16} />
+                        {expandedRows.has(item.id) ? (
+                          <ChevronUp size={20} />
+                        ) : (
+                          <ChevronDown size={20} />
+                        )}
                       </button>
                     </div>
-                  ) : (
-                    // โหมดแสดง
-                    <div className="flex gap-2 justify-center items-center">
-                      <span className="text-gray-800 font-mono text-xs bg-gray-100 px-2 py-1 rounded border border-gray-200">
-                        {item.trackingNumber || "-"}
-                      </span>
-                      <button
-                        className="bg-blue-500 hover:bg-blue-600 text-white p-1.5 rounded transition"
-                        onClick={() => setEditingTrackingId(item.id)}
-                        title="แก้ไข"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                    </div>
-                  )}
-                </td>
+                  </td>
 
-                <td className="p-3 text-center">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${getStatusColor(
-                      item.orderStatus
-                    )}`}
-                  >
-                    {item.orderStatus}
-                  </span>
-                </td>
+                  <td className="p-3 text-center text-xs whitespace-nowrap">
+                    {formatDate(item.createdAt)}
+                  </td>
 
-                <td className="p-3 text-center">
-                  <select
-                    value={item.orderStatus}
-                    onChange={(e) =>
-                      handleChangeOrderStatus(token, item.id, e.target.value)
-                    }
-                    className="border border-gray-300 bg-white text-gray-700 text-xs rounded-md p-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <option value="Not Process">รอตรวจสอบ</option>
-                    <option value="Processing">กำลังดำเนินการ</option>
-                    <option value="Completed">จัดส่งสำเร็จ</option>
-                    <option value="Cancelled">ยกเลิก</option>
-                  </select>
-                </td>
-              </tr>
+                  <td className="p-3">
+                    <ul className="list-disc list-inside text-xs text-gray-700 space-y-1">
+                      {item.products?.map((product, idx) => (
+                        <li key={idx}>
+                          <span className="font-medium">
+                            {product.product?.title}
+                          </span>
+                          <span className="text-gray-500">
+                            {" "}
+                            ({product.count} x {numberFormat(product.price)})
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+
+                  <td className="p-3 text-right font-bold text-blue-600 whitespace-nowrap">
+                    {numberFormat(item.cartTotal)}
+                  </td>
+
+                  <td className="p-3 text-center">
+                    {editingTrackingId === item.id ? (
+                      <div className="flex gap-2 justify-center items-center">
+                        <input
+                          className="border border-blue-400 rounded-md p-1.5 text-xs w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50"
+                          placeholder="ระบุเลขพัสดุ"
+                          onChange={(e) => handleTrackingInput(e, item.id)}
+                          value={trackingInputs[item.id] || ""}
+                          autoFocus
+                        />
+                        <button
+                          className={`${
+                            savingId === item.id
+                              ? "bg-gray-500"
+                              : "bg-green-500 hover:bg-green-600"
+                          } text-white p-1.5 rounded transition`}
+                          onClick={() => handleSaveTracking(item.id)}
+                          title="บันทึก"
+                          disabled={savingId === item.id}
+                        >
+                          <Save size={16} />
+                        </button>
+                        <button
+                          className="bg-gray-400 hover:bg-gray-500 text-white p-1.5 rounded transition"
+                          onClick={() => {
+                            setEditingTrackingId(null);
+                            handleTrackingChange(
+                              { target: { value: "" } },
+                              item.id
+                            );
+                          }}
+                          title="ยกเลิก"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2 justify-center items-center">
+                        <span className="text-gray-800 font-mono text-xs bg-gray-100 px-2 py-1 rounded border border-gray-200">
+                          {item.trackingNumber || "-"}
+                        </span>
+                        <button
+                          className="bg-blue-500 hover:bg-blue-600 text-white p-1.5 rounded transition"
+                          onClick={() => setEditingTrackingId(item.id)}
+                          title="แก้ไข"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+
+                  <td className="p-3 text-center">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${getStatusColor(
+                        item.orderStatus
+                      )}`}
+                    >
+                      {item.orderStatus}
+                    </span>
+                  </td>
+
+                  <td className="p-3 text-center">
+                    <select
+                      value={item.orderStatus}
+                      onChange={(e) =>
+                        handleChangeOrderStatus(token, item.id, e.target.value)
+                      }
+                      className="border border-gray-300 bg-white text-gray-700 text-xs rounded-md p-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    >
+                      <option value="Not Process">รอตรวจสอบ</option>
+                      <option value="Processing">กำลังดำเนินการ</option>
+                      <option value="Completed">จัดส่งสำเร็จ</option>
+                      <option value="Cancelled">ยกเลิก</option>
+                    </select>
+                  </td>
+                </tr>
+
+                {/* Expanded Row - Address Details */}
+                {expandedRows.has(item.id) && (
+                  <tr className="bg-blue-50 border-b border-blue-100">
+                    <td colSpan="8" className="p-4">
+                      <div className="bg-white rounded-lg shadow-sm p-4 border border-blue-200">
+                        <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                          <Package className="text-blue-600" size={18} />
+                          รายละเอียดที่อยู่จัดส่ง
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div className="space-y-2">
+                            <div className="flex items-start gap-2">
+                              <User className="text-gray-400 flex-shrink-0 mt-1" size={16} />
+                              <div>
+                                <span className="text-gray-500 text-xs">ผู้รับ:</span>
+                                <p className="font-medium text-gray-800">
+                                  {item.recipient || item.orderedBy?.name || "-"}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-start gap-2">
+                              <Phone className="text-gray-400 flex-shrink-0 mt-1" size={16} />
+                              <div>
+                                <span className="text-gray-500 text-xs">เบอร์โทร:</span>
+                                <p className="font-medium text-gray-800">
+                                  {item.phone || "-"}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="text-gray-400 flex-shrink-0 mt-1" size={16} />
+                              <div className="flex-1">
+                                <span className="text-gray-500 text-xs">ที่อยู่เต็ม:</span>
+                                <p className="font-medium text-gray-800 leading-relaxed">
+                                  {item.shippingAddress || item.orderedBy?.address || "-"}
+                                </p>
+                                
+                                {(item.province || item.district || item.subDistrict || item.zipcode) && (
+                                  <div className="mt-2 text-xs text-gray-600 space-y-1">
+                                    {item.subDistrict && <p>ตำบล/แขวง: {item.subDistrict}</p>}
+                                    {item.district && <p>อำเภอ/เขต: {item.district}</p>}
+                                    {item.province && <p>จังหวัด: {item.province}</p>}
+                                    {item.zipcode && <p>รหัสไปรษณีย์: {item.zipcode}</p>}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))
           ) : (
             <tr>

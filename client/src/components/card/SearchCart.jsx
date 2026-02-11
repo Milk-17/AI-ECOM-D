@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import useEcomStore from "../../store/ecom-store";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
-import { numberFormat } from "../../utils/number"; // <--- 1. เพิ่ม import
+import { numberFormat } from "../../utils/number";
 
 const SearchCart = () => {
   const getProduct = useEcomStore((state) => state.getProduct);
@@ -13,71 +13,71 @@ const SearchCart = () => {
   const [text, setText] = useState("");
   const [mainCategorySelected, setMainCategorySelected] = useState(null);
   const [subCategorySelected, setSubCategorySelected] = useState(null);
-  const [price, setPrice] = useState([100, 50000]);
-  const [minInput, setMinInput] = useState(100);
-  const [maxInput, setMaxInput] = useState(50000);
-  const [ok, setOk] = useState(false);
+  const [price, setPrice] = useState([0, 100000]); // ตั้ง default กว้างๆ ไว้ก่อน
+  const [minInput, setMinInput] = useState(0);
+  const [maxInput, setMaxInput] = useState(100000);
+  const [ok, setOk] = useState(false); // ตัวแปรสำหรับ trigger เมื่อหยุดเลื่อนเมาส์
 
-  // โหลด category
+  // 1. โหลด category ครั้งแรก
   useEffect(() => {
     getCategory();
   }, []);
 
-  // Search by text
+  // -----------------------------------------------------------
+  //  HERO SECTION: รวมพลัง 3 useEffect เป็น 1 เดียวตรงนี้ครับ
+  // -----------------------------------------------------------
   useEffect(() => {
     const delay = setTimeout(() => {
-      if (text) actionSearchFilters({ query: text });
-      else getProduct();
-    }, 300);
-    return () => clearTimeout(delay);
-  }, [text]);
+      // 1. คำนวณ Category ID
+      let categoryIds = [];
 
-  // Search by category
-  useEffect(() => {
-    let categoryIds = [];
-
-    if (subCategorySelected) {
-      // 1. ถ้าเลือก SubCategory: ใช้ ID นั้นเลย
-      categoryIds = [subCategorySelected];
-
-    } else if (mainCategorySelected) {
-      // 2. ถ้าเลือก Main Category (แต่ยังไม่เลือก Sub):
-      // ให้หา Main Category นั้นใน Store
-      const selectedMain = categories.find(
-        (c) => c.id === mainCategorySelected
-      );
-
-      // แล้วดึง ID ของ "SubCategories ลูก" ทั้งหมดของมันออกมา
-      if (selectedMain?.subCategories) {
-        categoryIds = selectedMain.subCategories.map((s) => s.id);
+      if (subCategorySelected) {
+        // ถ้าเลือก Sub ให้ส่ง Sub ID
+        categoryIds = [subCategorySelected];
+      } else if (mainCategorySelected) {
+        // ถ้าเลือก Main ให้ส่ง Sub ID ทั้งหมดของ Main นั้น
+        const selectedMain = categories.find((c) => c.id === mainCategorySelected);
+        if (selectedMain?.subCategories) {
+          categoryIds = selectedMain.subCategories.map((s) => s.id);
+        }
       }
-    }
 
-    // 3. ถ้ามี ID (ไม่ว่าจากข้อ 1 หรือ 2) ให้ส่งไป Filter
-    if (categoryIds.length > 0) {
-      actionSearchFilters({ category: categoryIds });
-    } else {
-      // ถ้าไม่ได้เลือกอะไรเลย ให้ดึงสินค้าทั้งหมด
-      getProduct();
-    }
-  }, [mainCategorySelected, subCategorySelected, categories]);
+      // 2. มัดรวม Payload (ข้อมูลที่จะส่งหลังบ้าน)
+      const payload = {
+        query: text,       // ส่งคำค้นหา
+        category: categoryIds, // ส่งหมวดหมู่ (ถ้ามี)
+        price: price       // ส่งราคา [min, max]
+      };
 
-  // Search by price
-  useEffect(() => {
-    actionSearchFilters({ price });
-  }, [ok]);
+      // 3. ยิง API ทีเดียว (ถ้าไม่มี filter อะไรเลย อาจจะดึง getProduct หรือส่ง payload ว่างก็ได้)
+      // แต่ในระบบนี้ส่งไปให้ searchFilters จัดการเลยง่ายสุด
+      actionSearchFilters(payload);
 
+    }, 300); // Debounce 300ms (รอให้ user พิมพ์หรือเลื่อนเสร็จก่อน)
+
+    return () => clearTimeout(delay);
+  }, [text, mainCategorySelected, subCategorySelected, ok]); 
+  //  Dependency Array: สั่งให้ทำงานเมื่อ Text เปลี่ยน, หมวดหมู่เปลี่ยน, หรือ ok (ราคา) เปลี่ยน
+
+  // -----------------------------------------------------------
+
+
+  // Handler สำหรับ Slider (เมื่อลาก)
   const handlePrice = (value) => {
     setPrice(value);
     setMinInput(value[0]);
     setMaxInput(value[1]);
-    setTimeout(() => setOk(!ok), 300);
   };
+  
+  // Handler สำหรับ Slider (เมื่อปล่อยเมาส์) -> ค่อยยิง API
+  const handlePriceAfterChange = (value) => {
+      // เมื่อปล่อยเมาส์ค่อยสลับสถานะ ok เพื่อไป trigger useEffect ด้านบน
+      setOk(!ok); 
+  }
 
-  // Handler สำหรับพิมพ์ Min - ดักเฉพาะตัวเลข
+  // Handler สำหรับพิมพ์ Min
   const handleMinInput = (e) => {
     const value = e.target.value;
-    // อนุญาตเฉพาะตัวเลข
     if (!/^\d*$/.test(value)) return;
     
     const val = parseInt(value) || 0;
@@ -87,15 +87,14 @@ const SearchCart = () => {
     setMaxInput(newMax);
   };
 
-  // เมื่อออกจาก input ให้ค้นหา
+  // เมื่อออกจาก input (Blur) -> ค่อยยิง API
   const handleMinBlur = () => {
-    setTimeout(() => setOk(!ok), 300);
+    setOk(!ok);
   };
 
-  // Handler สำหรับพิมพ์ Max - ดักเฉพาะตัวเลข
+  // Handler สำหรับพิมพ์ Max
   const handleMaxInput = (e) => {
     const value = e.target.value;
-    // อนุญาตเฉพาะตัวเลข
     if (!/^\d*$/.test(value)) return;
     
     const val = parseInt(value) || 0;
@@ -105,9 +104,9 @@ const SearchCart = () => {
     setMinInput(newMin);
   };
 
-  // เมื่อออกจาก input ให้ค้นหา
+  // เมื่อออกจาก input (Blur) -> ค่อยยิง API
   const handleMaxBlur = () => {
-    setTimeout(() => setOk(!ok), 300);
+    setOk(!ok);
   };
 
   return (
@@ -198,7 +197,7 @@ const SearchCart = () => {
               value={maxInput}
               onChange={handleMaxInput}
               onBlur={handleMaxBlur}
-              placeholder="50000"
+              placeholder="100000"
             />
           </div>
         </div>
@@ -210,13 +209,17 @@ const SearchCart = () => {
             <span>Max : {numberFormat(price[1])}</span>
           </div>
           <Slider
-            onChange={handlePrice}
             range
             min={0}
             max={150000}
             value={price}
-            trackStyle={{ backgroundColor: '#2563eb' }} // ปรับสีเส้น Slider ให้สวยขึ้น
-            handleStyle={{ borderColor: '#2563eb', backgroundColor: '#2563eb' }} // ปรับสีปุ่ม Slider
+            onChange={handlePrice} // ทำงานตอนลาก (เปลี่ยนตัวเลขเฉยๆ ยังไม่ยิง API)
+            onAfterChange={handlePriceAfterChange} //  ทำงานตอนปล่อยเมาส์ (ยิง API)
+            trackStyle={[{ backgroundColor: '#2563eb' }]}
+            handleStyle={[
+                { borderColor: '#2563eb', backgroundColor: '#2563eb' },
+                { borderColor: '#2563eb', backgroundColor: '#2563eb' }
+            ]}
           />
         </div>
       </div>

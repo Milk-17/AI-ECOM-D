@@ -234,7 +234,7 @@ exports.saveAddress = async (req,res) => {
       console.log(err)
       res.status(500).json({ message: "saveAddress Error"})
   }
-}
+};
 
 // 2. ดึงรายการที่อยู่ (Read) - (เหมือนเดิม)
 exports.getAddresses = async (req, res) => {
@@ -426,7 +426,7 @@ exports.getOrder = async (req,res) => {
       console.log(err);
       res.status(500).json({ message: "getOrder Error" });
   }
-}
+};
 
 // ================= USER : Update Profile (Simple Version) =================
 exports.updateProfile = async (req, res) => {
@@ -456,3 +456,57 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: "Server Error Update Profile" });
   }
 };  
+
+// ================= USER : Change Password =================
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "ไม่พบข้อมูลผู้ใช้ในระบบ" });
+    }
+
+    // 1. เช็คว่ารหัสผ่านเดิมถูกไหม (Old Password Check)
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "รหัสผ่านเดิมไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง" });
+    }
+
+    // 2.  เพิ่มการเช็ค: รหัสใหม่ต้องยากพอ (New Password Validation)
+    // เงื่อนไข: 8 ตัวขึ้นไป + ตัวใหญ่ + ตัวเล็ก + ตัวเลข
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({ 
+          message: "รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัว, มีตัวพิมพ์ใหญ่, ตัวพิมพ์เล็ก และตัวเลข" 
+      });
+    }
+
+    // (Option) เช็คเพิ่ม: รหัสใหม่ต้องไม่ซ้ำกับรหัสเดิม
+    const isSameAsOld = await bcrypt.compare(newPassword, user.password);
+    if (isSameAsOld) {
+        return res.status(400).json({ message: "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม" });
+    }
+
+    // 3. Hash และบันทึก
+    const hashNewPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashNewPassword
+      }
+    });
+
+    res.json({ message: "เปลี่ยนรหัสผ่านสำเร็จเรียบร้อยแล้ว" });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน" });
+  }
+};
