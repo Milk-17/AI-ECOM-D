@@ -1,5 +1,5 @@
 // client/src/components/MainNav.jsx
-import React, { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import useEcomStore from "../store/ecom-store";
 import { User, ChevronDown, Menu, X, ShoppingCart } from "lucide-react";
@@ -11,7 +11,20 @@ function MainNav() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
+
+  // D1: Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -33,22 +46,21 @@ function MainNav() {
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="bg-white shadow-md sticky top-0 z-[60]">
       <div className="mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to={"/"} className="flex-shrink-0">
-            <img 
-              src="/LOGO.png" 
-              alt="Website Logo" 
-              className="w-16 sm:w-20 h-auto"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.style.display = 'none';
-                // แสดงข้อความแทนถ้าโหลดไม่ได้
-                e.target.parentElement.innerHTML = '<span class="text-xl font-bold text-blue-600">SHOP</span>';
-              }}
-            />
+            {logoError ? (
+              <span className="text-xl font-bold text-blue-600">SHOP</span>
+            ) : (
+              <img 
+                src="/LOGO.png" 
+                alt="Website Logo" 
+                className="w-16 sm:w-20 h-auto"
+                onError={() => setLogoError(true)}
+              />
+            )}
           </Link>
 
           {/* Desktop Menu */}
@@ -95,7 +107,7 @@ function MainNav() {
           {/* Right Side - Desktop */}
           <div className="hidden md:flex items-center gap-4">
             {user ? (
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleDropdown}
                   className="flex items-center justify-between gap-2 hover:bg-gray-200 px-3 py-2 rounded-full border border-gray-100 transition duration-150 shadow-sm min-w-[140px]"
@@ -291,7 +303,7 @@ function MainNav() {
                 <NavLink
                   to={"/login"}
                   onClick={closeMobileMenu}
-                  className="block px-4 py-2 text-white hover:bg-gray-100 rounded-md text-sm font-medium text-center mx-4"
+                  className="block px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md text-sm font-medium text-center mx-4"
                 >
                   เข้าสู่ระบบ
                 </NavLink>

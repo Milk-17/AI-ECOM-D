@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { listProductBy } from "../../api/product";
 import ProductCard from "../card/ProductCard";
 import SwiperShowProduct from "../../utils/SwiperShowProduct";
@@ -13,7 +13,7 @@ const NewProduct = () => {
   }, []);
 
   const loadData = () => {
-    listProductBy("updatedAt", "desc", 12)
+    listProductBy("createdAt", "desc", 12)
       .then((res) => {
         setData(res.data);
       })
@@ -22,13 +22,11 @@ const NewProduct = () => {
       });
   };
 
-  console.log(data);
-
   return (
     <SwiperShowProduct>
       {data?.map((item, index) => (
         <SwiperSlide key={index}>
-          <ProductCard item={item} showTitle={true} />
+          <ProductCard item={item} showTitle={true} showDescription={false} />
         </SwiperSlide>
       ))}
     </SwiperShowProduct>

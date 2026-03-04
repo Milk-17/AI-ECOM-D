@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getOrders } from "../../api/user";
 import useEcomStore from "../../store/ecom-store";
 import { numberFormat } from "../../utils/number";
@@ -24,7 +24,7 @@ const HistoryCard = () => {
       }
     } catch (err) {
       console.log(err);
-      toast.error("Failed to fetch orders!");
+      toast.error("ไม่สามารถโหลดประวัติคำสั่งซื้อได้");
     } finally {
       setLoading(false);
     }
@@ -106,14 +106,14 @@ const HistoryCard = () => {
 
                     {/* แสดงเลขพัสดุ (ถ้ามี) */}
                     {item.trackingNumber && (
-                      <div className="flex items-center gap-2 text-sm font-semibold text-blue-600 bg-blue-100 px-3 py-2 rounded-lg w-fit border border-blue-200 shadow-sm">
-                          <Truck size={18} />
-                          <span className="font-mono">เลขพัสดุ: {item.trackingNumber}</span>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-blue-600 bg-blue-100 px-3 py-2 rounded-lg border border-blue-200 shadow-sm max-w-full">
+                          <Truck size={18} className="flex-shrink-0" />
+                          <span className="font-mono break-all">เลขพัสดุ: {item.trackingNumber}</span>
                       </div>
                     )}
                     
                     {item.shippingAddress && (
-                      <div className="flex items-start gap-2 text-sm text-gray-700 bg-white p-3 rounded-lg border border-gray-200 mt-2">
+                      <div className="flex items-start gap-2 text-sm text-gray-700 bg-white p-3 rounded-lg border border-gray-200 mt-2 break-words">
                           <MapPin size={18} className="mt-0.5 flex-shrink-0 text-gray-500" />
                           <span className="leading-relaxed">
                               {item.shippingAddress}
@@ -133,7 +133,7 @@ const HistoryCard = () => {
               {/* Products Table */}
               <div className="p-4 md:p-6">
                 <div className="overflow-x-auto rounded-xl border border-gray-200">
-                  <table className="w-full text-sm text-left">
+                  <table className="w-full text-sm text-left min-w-[500px]">
                     <thead className="bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 text-xs font-bold uppercase">
                       <tr>
                         <th className="px-4 py-3">สินค้า</th>
@@ -145,8 +145,8 @@ const HistoryCard = () => {
                     <tbody className="divide-y divide-gray-100 bg-white">
                       {item.products?.map((product, i) => (
                         <tr key={i} className="hover:bg-blue-50 transition-colors">
-                          <td className="px-4 py-3 font-semibold text-gray-800">
-                              {product.product.title}
+                          <td className="px-4 py-3 font-semibold text-gray-800 max-w-[200px]">
+                              <span className="line-clamp-2">{product.product.title}</span>
                           </td>
                           <td className="px-4 py-3 text-right text-gray-600">
                               {numberFormat(product.price)}

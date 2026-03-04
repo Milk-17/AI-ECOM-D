@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { saveOrder } from "../api/user";
 import useEcomStore from "../store/ecom-store";
 import { toast } from "react-toastify";
@@ -17,24 +17,19 @@ export default function CheckoutForm() {
     setIsLoading(true);
 
     try {
-      await saveOrder(token, {})
-        .then((res) => {
-          console.log(res);
-          clearCart();
-          getProduct(100);
-          toast.success("สั่งซื้อสำเร็จ!");
-          navigate("/user/history");
-        })
-        .catch((err) => {
-          console.log(err);
-          toast.error("เกิดข้อผิดพลาดในการสั่งซื้อ");
-        });
+      const res = await saveOrder(token, {});
+      console.log(res);
+      clearCart();
+      getProduct(100);
+      toast.success("สั่งซื้อสำเร็จ!");
+      navigate("/user/history");
     } catch (error) {
       console.error(error);
-      toast.error("เกิดข้อผิดพลาด");
+      const message = error?.response?.data?.message || "เกิดข้อผิดพลาดในการสั่งซื้อ";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (

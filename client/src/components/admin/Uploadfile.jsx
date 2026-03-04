@@ -1,5 +1,5 @@
 // rafce
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'react-toastify'
 import Resize from 'react-image-file-resizer'
 import { removeFiles, uploadFiles } from '../../api/product'
@@ -24,7 +24,7 @@ const Uploadfile = ({ form, setForm }) => {
                 // Validate
                 const file = files[i]
                 if (!file.type.startsWith('image/')) {
-                    toast.error(`File ${file.name} บ่แม่นรูป`)
+                    toast.error(`ไฟล์ ${file.name} ไม่ใช่ไฟล์รูปภาพ`)
                     continue
                 }
                 // Image Resize 
@@ -46,7 +46,7 @@ const Uploadfile = ({ form, setForm }) => {
                                     images: allFiles
                                 })
                                 setIsLoading(false)
-                                toast.success('Upload image Sucess!!!')
+                                toast.success('อัปโหลดรูปสำเร็จ!')
                             })
                             .catch((err) => {
                                 console.log(err)

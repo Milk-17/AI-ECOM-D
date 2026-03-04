@@ -243,7 +243,7 @@ exports.currentAdmin = async (req, res) => {
         res.json({ user });
     } catch (err) {
         console.error('Current admin error:', err.message);
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: "เกิดข้อผิดพลาด" });
     }
 };
 
@@ -258,14 +258,14 @@ exports.changePassword = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(400).json({ message: "User not found" });
+            return res.status(400).json({ message: "ไม่พบข้อมูลผู้ใช้ในระบบ" });
         }
 
         // Check old password
         const isMatch = await bcrypt.compare(currentPassword, user.password);
 
         if (!isMatch) {
-            return res.status(400).json({ message: "Current password is incorrect" });
+            return res.status(400).json({ message: "รหัสผ่านเดิมไม่ถูกต้อง" });
         }
 
         // Hash and save new password
@@ -278,7 +278,7 @@ exports.changePassword = async (req, res) => {
             }
         });
 
-        res.json({ message: "Password changed successfully" });
+        res.json({ message: "เปลี่ยนรหัสผ่านสำเร็จแล้ว" });
 
     } catch (err) {
         console.error('Change password error:', err.message);

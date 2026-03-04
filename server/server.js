@@ -7,13 +7,6 @@ const { readdirSync } = require ('fs');
 const cors = require('cors');  // Server connet Clyan
 const helmet = require('helmet');  // Security headers
 const rateLimit = require('express-rate-limit');  // Rate limiting
-const orderRoutes = require('./routes/order');
-
-
-//const authRouter = require ('./routes/auth');
-//const categoryRouter = require ('./routes/category');
-
-
 
 
 // ===== SECURITY MIDDLEWARE =====
@@ -53,27 +46,12 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// 4. Stricter limiter สำหรับ Auth routes (ใช้ในใน routes/auth.js)
-// ⚠️ NOTE: ตั้งค่าแต่ยังไม่ใช้ที่นี่ (ใช้ที่ routes/auth.js ทีละ endpoint)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,  // 15 นาที
-  max: 5,                    // จำกัด 5 attempts
-  keyGenerator: (req) => req.ip,
-  message: 'Too many login attempts, please try again later',
-  skipSuccessfulRequests: false  // ไม่นับ successful requests
-});
-
 // ===== BODY PARSER MIDDLEWARE =====
  app.use(morgan('dev'));
  app.use(express.json({limit: '10mb'}));  // ลดขนาดจาก 15mb เป็น 10mb
  app.use(express.urlencoded({ limit: '10mb', extended: true }));
- app.use('/api', orderRoutes);
-
 
 // ===== AUTO LOAD ROUTES =====
-// app.use('/api',authRouter);
-// app.use('/api',categoryRouter);
-//console.log(readdirSync('./routes'));
 readdirSync('./routes').map((c)=> app.use('/api',require('./routes/'+c)));
 
 // ===== ERROR HANDLING MIDDLEWARE =====

@@ -1,4 +1,3 @@
-import React from 'react'
 import useEcomStore from '../../store/ecom-store'
 import { Menu } from 'lucide-react'
 

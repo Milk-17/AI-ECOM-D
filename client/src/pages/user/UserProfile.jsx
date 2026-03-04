@@ -1,5 +1,5 @@
 // client/src/pages/user/UserProfile.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import useEcomStore from "../../store/ecom-store";
 import { updateUserProfile, changePassword } from "../../api/user";
 import { toast } from "react-toastify";
@@ -212,7 +212,7 @@ const UserProfile = () => {
                   <label className="block text-sm font-bold text-gray-700 mb-4 text-center flex items-center justify-center gap-2">
                     <User size={18} className="text-blue-600" /> เลือกรูปโปรไฟล์ใหม่
                   </label>
-                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-4 justify-items-center">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 gap-3 sm:gap-4 justify-items-center">
                     {avatars.map((url, idx) => (
                       <div
                         key={idx}

@@ -1,5 +1,5 @@
 // ProductDetailCard.jsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ShoppingCart, Plus, Minus, Package, CheckCircle, AlertCircle } from "lucide-react";
 import { useParams, Link } from "react-router-dom";
 import { getProductById, listProduct } from "../../api/product";

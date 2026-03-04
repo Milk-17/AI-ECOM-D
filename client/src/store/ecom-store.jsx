@@ -3,7 +3,6 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { listCategory } from "../api/Category";
 import { listProduct, searchFilters } from "../api/product";
-import _ from "lodash";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -30,7 +29,11 @@ const ecomStore = (set, get) => ({
     const index = carts.findIndex((item) => item.id === product.id);
 
     if (index !== -1) {
-      // 2. กรณี "มีของอยู่แล้ว" -> ให้บวกจำนวน (count) เพิ่ม 1
+      // 2. กรณี "มีของอยู่แล้ว" -> เช็คสต็อคก่อนบวก
+      const currentCount = carts[index].count;
+      if (product.quantity && currentCount >= product.quantity) {
+        return; // ไม่เพิ่มถ้าเกินสต็อค
+      }
       const newCarts = [...carts]; // copy array เดิมมา
       newCarts[index].count += 1;  // บวกจำนวนเพิ่ม
       set({ carts: newCarts });    // update state
@@ -66,7 +69,7 @@ const ecomStore = (set, get) => ({
   actionDeleteProduct: (productId) => {
     set((state) => ({
       // ใช้ != (เท่ากับ 2 ตัว) เผื่อ ID เป็น string/number ไม่ตรงกัน
-      products: state.products.filter((item) => item.id != productId), 
+      products: state.products.filter((item) => item.id !== Number(productId)), 
     }));
   },
 

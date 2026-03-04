@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { 
   createCategory, 
   listCategory, 
@@ -170,7 +170,7 @@ const FormCategory = () => {
             
             <ul className="divide-y divide-gray-100">
                 {categories.map(main => (
-                    <React.Fragment key={main.id}>
+                    <Fragment key={main.id}>
                         {/* Main Category Row */}
                         <li className="group flex justify-between items-center px-6 py-4 hover:bg-gray-50 transition-colors">
                             <div className="flex items-center gap-3">
@@ -232,7 +232,7 @@ const FormCategory = () => {
                                 ))}
                             </div>
                         )}
-                    </React.Fragment>
+                    </Fragment>
                 ))}
 
                 {categories.length === 0 && (

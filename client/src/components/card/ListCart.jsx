@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { List, Loader, Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
 import useEcomStore from "../../store/ecom-store";
 import { Link, useNavigate } from "react-router-dom";
@@ -219,7 +219,7 @@ const ListCart = () => {
 
           {/* Right: Order Summary (Sticky) */}
           <div className="lg:col-span-1">
-            <div className="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-md border border-gray-100 space-y-4 sm:space-y-6 lg:sticky lg:top-4">
+            <div className="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-md border border-gray-100 space-y-4 sm:space-y-6 lg:sticky lg:top-20">
               <h2 className="font-bold text-xl sm:text-2xl text-gray-800 border-b pb-3 sm:pb-4">
                 สรุปคำสั่งซื้อ
               </h2>

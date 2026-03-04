@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import useEcomStore from "../../store/ecom-store";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -30,7 +30,7 @@ const FormProductPriceHistory = () => {
       setHistory(res.data);
     } catch (err) {
       console.error(err);
-      toast.error("Cannot fetch price history");
+      toast.error("ไม่สามารถโหลดประวัติราคาได้");
     } finally {
       setLoading(false);
     }

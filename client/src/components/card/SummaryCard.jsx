@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 //  อย่าลืม import updateAddress และ deleteAddress เพิ่มนะ
 import { listUserCart, saveOrder, saveAddress, getAddress, updateAddress, deleteAddress } from "../../api/user"; 
 import useEcomStore from "../../store/ecom-store";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { numberFormat } from "../../utils/number";
-import { MapPin, ShoppingBag, CreditCard, Plus, Home, Phone, User, Trash2, Pencil, X } from "lucide-react";
+import { MapPin, ShoppingBag, CreditCard, Plus, Home, Phone, User, Trash2, Pencil, X, ImageOff } from "lucide-react";
 
 const SummaryCard = () => {
   const token = useEcomStore((state) => state.token);
   const [products, setProducts] = useState([]);
   const [cartTotal, setCartTotal] = useState(0);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isOrdering, setIsOrdering] = useState(false);
 
   // Address State
   const [addresses, setAddresses] = useState([]);
@@ -146,17 +148,24 @@ const SummaryCard = () => {
     if (!selectedAddressId) {
       return toast.warning("กรุณาเลือกที่อยู่จัดส่ง");
     }
+    setShowPaymentModal(true);
+  };
+
+  const handleConfirmOrder = () => {
+    setIsOrdering(true);
     saveOrder(token, { addressId: selectedAddressId }) 
       .then((res) => {
         toast.success(res.data.message || "สั่งซื้อเรียบร้อยแล้ว");
         clearCart(); 
+        setShowPaymentModal(false);
         navigate("/user/history");
       })
       .catch((err) => {
         console.log(err);
-        const errMsg = err.response?.data?.message || "Payment failed!";
+        const errMsg = err.response?.data?.message || "การชำระเงินล้มเหลว!";
         toast.error(errMsg);
-      });
+      })
+      .finally(() => setIsOrdering(false));
   };
 
   return (
@@ -194,7 +203,7 @@ const SummaryCard = () => {
                                 <Phone size={14} /> {addr.phone}
                             </span>
                         </div>
-                        <div className="text-sm text-gray-600 leading-relaxed pr-8">
+                        <div className="text-sm text-gray-600 leading-relaxed pr-16">
                             {addr.addrDetail} <br/>
                             {addr.subDistrict} {addr.district} {addr.province} {addr.zipcode}
                         </div>
@@ -276,7 +285,7 @@ const SummaryCard = () => {
 
         {/* --- Right: Order Summary (เหมือนเดิม) --- */}
         <div className="md:w-1/3">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 sticky top-6">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 sticky top-20">
             <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-6">
                 <ShoppingBag className="text-blue-600" /> สรุปคำสั่งซื้อ
             </h1>
@@ -311,6 +320,88 @@ const SummaryCard = () => {
           </div>
         </div>
       </div>
+
+      {/* ===== Payment Modal Popup ===== */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4" onClick={() => !isOrdering && setShowPaymentModal(false)}>
+          <div 
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-white font-bold text-lg flex items-center gap-2">
+                <CreditCard size={22} /> ชำระเงิน
+              </h2>
+              <button 
+                onClick={() => !isOrdering && setShowPaymentModal(false)} 
+                className="text-white/80 hover:text-white transition"
+                disabled={isOrdering}
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 flex flex-col items-center">
+              {/* ยอดชำระ */}
+              <div className="mb-4 text-center">
+                <p className="text-sm text-gray-500">ยอดที่ต้องชำระ</p>
+                <p className="text-3xl font-bold text-blue-600">{numberFormat(cartTotal)} <span className="text-base font-normal text-gray-500">บาท</span></p>
+              </div>
+
+              {/* กรอบรูป — เปลี่ยน src เป็นรูปจากเครื่องของคุณ */}
+              <div className="w-full max-w-[280px] aspect-square rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden mb-4">
+                <img 
+                  src="/payment.jpg" 
+                  alt="Payment QR Code" 
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="hidden flex-col items-center justify-center text-gray-400 gap-2">
+                  <ImageOff size={48} />
+                  <p className="text-sm text-center px-4">วางไฟล์รูป <span className="font-mono font-bold text-gray-600">payment.jpg</span><br/>ไว้ในโฟลเดอร์ <span className="font-mono font-bold text-gray-600">client/public/</span></p>
+                </div>
+              </div>
+
+              {/* ข้อความแจ้ง */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 w-full text-center">
+                <p className="text-sm text-amber-800 font-medium">
+                  📌 เมื่อชำระเงินแล้ว กรุณาส่งสลิปไปที่ <span className="font-bold text-amber-900">ไลน์</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                disabled={isOrdering}
+                className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-600 font-semibold hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleConfirmOrder}
+                disabled={isOrdering}
+                className="flex-1 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isOrdering ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    กำลังดำเนินการ...
+                  </>
+                ) : (
+                  "ยืนยันการสั่งซื้อ"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

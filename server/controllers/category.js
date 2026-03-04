@@ -12,7 +12,7 @@ exports.createCategory = async (req, res) => {
   // *** เริ่มต้นการแก้ไข: ป้องกันข้อมูลซ้ำ และ Validation ***
    // 1. ตรวจสอบว่ามี name ส่งมาหรือไม่
    if (!name) {
-   return res.status(400).json({ message: "Name is required" });
+   return res.status(400).json({ message: "กรุณากรอกชื่อหมวดหมู่" });
    }
   
    const existingCategory = await prisma.category.findFirst({
@@ -20,7 +20,7 @@ exports.createCategory = async (req, res) => {
      });
   
    if (existingCategory) {
-   return res.status(400).json({ message: "Category with this name already exists" });
+   return res.status(400).json({ message: "ชื่อหมวดหมู่นี้มีอยู่แล้ว" });
    }
   // *** สิ้นสุดการแก้ไข: ป้องกันข้อมูลซ้ำ และ Validation ***
   
@@ -31,7 +31,7 @@ exports.createCategory = async (req, res) => {
    res.status(201).send(category); // <--- ปรับ Status Code เป็น 201 (Created)
    } catch (err) {
    console.log(err);
-   res.status(500).json({ message: "create category controller Error" });
+   res.status(500).json({ message: "สร้างหมวดหมู่ไม่สำเร็จ" });
    }
   };
 
@@ -44,7 +44,7 @@ exports.listCategories = async (req, res) => {
     res.send(categories);
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "list category controller Error" });
+    res.status(500).json({ message: "ดึงรายการหมวดหมู่ไม่สำเร็จ" });
   }
 };
 
@@ -58,7 +58,7 @@ exports.removeCategory = async (req, res) => {
   
       // 1. ตรวจสอบว่า ID เป็นตัวเลขที่ถูกต้อง
       if (isNaN(categoryId)) {
-          return res.status(400).json({ message: "Invalid Category ID" });
+          return res.status(400).json({ message: "รหัสหมวดหมู่ไม่ถูกต้อง" });
       }
   
       // 2. ตรวจสอบว่ามี subcategory อยู่หรือไม่ (Logic เดิมของคุณ ถูกต้องแล้ว)
@@ -69,7 +69,7 @@ exports.removeCategory = async (req, res) => {
       if (subCategories.length > 0) {
         return res
           .status(400)
-          .json({ message: "Cannot delete category with subcategories" });
+          .json({ message: "ไม่สามารถลบหมวดหมู่ที่มีหมวดหมู่ย่อยอยู่" });
       }
   
       // 3. ทำการลบ
@@ -83,11 +83,11 @@ exports.removeCategory = async (req, res) => {
   // *** เริ่มต้นการแก้ไข: จัดการ Error กรณีหา ID ไม่เจอ ***
       // 4. ดักจับ Error กรณีลบไม่สำเร็จ (เช่น หา ID ที่จะลบไม่เจอ)
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
-        return res.status(404).json({ message: "Category not found" });
+        return res.status(404).json({ message: "ไม่พบหมวดหมู่ที่ต้องการลบ" });
       }
   // *** สิ้นสุดการแก้ไข: จัดการ Error กรณีหา ID ไม่เจอ ***
       console.log(err);
-      res.status(500).json({ message: "remove category controller Error" });
+      res.status(500).json({ message: "ลบหมวดหมู่ไม่สำเร็จ" });
     }
   };
   // แก้ไข Category
@@ -100,10 +100,10 @@ exports.removeCategory = async (req, res) => {
   
       // 1. ตรวจสอบว่า ID และ Name ถูกต้องหรือไม่
       if (isNaN(categoryId)) {
-        return res.status(400).json({ message: "Invalid Category ID" });
+        return res.status(400).json({ message: "รหัสหมวดหมู่ไม่ถูกต้อง" });
       }
       if (!name) {
-        return res.status(400).json({ message: "Name is required" });
+        return res.status(400).json({ message: "กรุณากรอกชื่อหมวดหมู่" });
       }
   
       // 2. ตรวจสอบว่ามีชื่อซ้ำหรือไม่ (โดยไม่นับตัวมันเอง)
@@ -116,7 +116,7 @@ exports.removeCategory = async (req, res) => {
       });
   
       if (existingCategory) {
-        return res.status(400).json({ message: "Category with this name already exists" });
+        return res.status(400).json({ message: "ชื่อหมวดหมู่นี้มีอยู่แล้ว" });
       }
   
       // 3. ทำการอัปเดตข้อมูล
@@ -130,10 +130,10 @@ exports.removeCategory = async (req, res) => {
     } catch (err) {
       // 4. ดักจับ Error กรณีหา ID ไม่เจอ (P2025)
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
-        return res.status(404).json({ message: "Category not found" });
+        return res.status(404).json({ message: "ไม่พบหมวดหมู่ที่ระบุ" });
       }
       console.log(err);
-      res.status(500).json({ message: "update category controller Error" });
+      res.status(500).json({ message: "แก้ไขหมวดหมู่ไม่สำเร็จ" });
     }
   };
 
@@ -147,12 +147,12 @@ exports.createSubCategory = async (req, res) => {
   // *** เริ่มต้นการแก้ไข: ป้องกันข้อมูลซ้ำ และ Validation ***
       // 1. ตรวจสอบ Input
       if (!name || !categoryId) {
-        return res.status(400).json({ message: "Name and categoryId are required" });
-      }
+return res.status(400).json({ message: "กรุณากรอกชื่อและเลือกหมวดหมู่หลัก" });
+      }
   
       const parentId = Number(categoryId);
       if (isNaN(parentId)) {
-          return res.status(400).json({ message: "Invalid Category ID" });
+          return res.status(400).json({ message: "รหัสหมวดหมู่ไม่ถูกต้อง" });
       }
   
       // 2. ตรวจสอบว่า Category (แม่) ที่จะเอาไปเชื่อม มีอยู่จริงหรือไม่
@@ -161,9 +161,7 @@ exports.createSubCategory = async (req, res) => {
       });
   
       if (!parentCategory) {
-        return res.status(404).json({ message: "Parent Category not found" });
-      }
-  
+        return res.status(404).json({ message: "ไม่พบหมวดหมู่หลักที่ระบุ" });      }  
       // 3. ตรวจสอบข้อมูลซ้ำ (ป้องกันการสร้าง SubCategory ชื่อซ้ำ ภายใต้ Category แม่ เดียวกัน)
       const existingSubCategory = await prisma.subCategory.findFirst({
         where: {
@@ -173,7 +171,7 @@ exports.createSubCategory = async (req, res) => {
       });
   
       if (existingSubCategory) {
-        return res.status(400).json({ message: "This subcategory already exists in this category" });
+        return res.status(400).json({ message: "หมวดหมู่ย่อยนี้มีอยู่แล้วในหมวดหมู่นี้" });
       }
   // *** สิ้นสุดการแก้ไข: ป้องกันข้อมูลซ้ำ และ Validation ***
   
@@ -187,7 +185,7 @@ exports.createSubCategory = async (req, res) => {
       res.status(201).send(subCategory); // <--- ปรับ Status Code เป็น 201 (Created)
     } catch (err) {
       console.log(err);
-      res.status(500).json({ message: "create subcategory controller Error" });
+      res.status(500).json({ message: "สร้างหมวดหมู่ย่อยไม่สำเร็จ" });
     }
   };
 
@@ -201,7 +199,7 @@ exports.listSubCategories = async (req, res) => {
     res.send(subCategories);
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "list subcategory controller Error" });
+    res.status(500).json({ message: "ดึงรายการหมวดหมู่ย่อยไม่สำเร็จ" });
   }
 };
 
@@ -215,7 +213,7 @@ exports.removeSubCategory = async (req, res) => {
   
       // 1. ตรวจสอบว่า ID เป็นตัวเลขที่ถูกต้อง
       if (isNaN(subId)) {
-          return res.status(400).json({ message: "Invalid SubCategory ID" });
+          return res.status(400).json({ message: "รหัสหมวดหมู่ย่อยไม่ถูกต้อง" });
       }
   
     const subCategory = await prisma.subCategory.delete({
@@ -228,11 +226,11 @@ exports.removeSubCategory = async (req, res) => {
   // *** เริ่มต้นการแก้ไข: จัดการ Error กรณีหา ID ไม่เจอ ***
     // 2. ดักจับ Error กรณีลบไม่สำเร็จ (เช่น หา ID ที่จะลบไม่เจอ)
    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
-   return res.status(404).json({ message: "SubCategory not found" });
+   return res.status(404).json({ message: "ไม่พบหมวดหมู่ย่อยที่ระบุ" });
    }
   // *** สิ้นสุดการแก้ไข: จัดการ Error กรณีหา ID ไม่เจอ ***
    console.log(err);
-   res.status(500).json({ message: "remove subcategory controller Error" });
+   res.status(500).json({ message: "ลบหมวดหมู่ย่อยไม่สำเร็จ" });
    }
   };
 
@@ -246,12 +244,12 @@ exports.updateSubCategory = async (req, res) => {
 
     // 1. ตรวจสอบ ID
     if (isNaN(subId)) {
-      return res.status(400).json({ message: "Invalid SubCategory ID" });
+      return res.status(400).json({ message: "รหัสหมวดหมู่ย่อยไม่ถูกต้อง" });
     }
     
     // 2. ตรวจสอบว่าส่งชื่อมาแก้ไขหรือไม่
     if (!name) {
-        return res.status(400).json({ message: "Name is required" });
+        return res.status(400).json({ message: "กรุณากรอกชื่อหมวดหมู่" });
     }
 
     // 3. เตรียมข้อมูลที่จะอัปเดต
@@ -261,7 +259,7 @@ exports.updateSubCategory = async (req, res) => {
     if (categoryId) {
         const parentId = Number(categoryId);
         if (isNaN(parentId)) {
-            return res.status(400).json({ message: "Invalid Parent Category ID" });
+            return res.status(400).json({ message: "รหัสหมวดหมู่หลักไม่ถูกต้อง" });
         }
         
         // เช็คว่าแม่ตัวใหม่มีอยู่จริงไหม
@@ -269,7 +267,7 @@ exports.updateSubCategory = async (req, res) => {
             where: { id: parentId }
         });
         if (!parentExists) {
-            return res.status(404).json({ message: "Parent Category not found" });
+            return res.status(404).json({ message: "ไม่พบหมวดหมู่หลักที่ระบุ" });
         }
 
         updateData.categoryId = parentId;
@@ -289,9 +287,9 @@ exports.updateSubCategory = async (req, res) => {
   } catch (err) {
     // 6. ดักจับ Error กรณีหา ID ไม่เจอ (P2025)
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
-        return res.status(404).json({ message: "SubCategory not found" });
+        return res.status(404).json({ message: "ไม่พบหมวดหมู่ย่อยที่ระบุ" });
     }
     console.log(err);
-    res.status(500).json({ message: "update subcategory controller Error" });
+    res.status(500).json({ message: "แก้ไขหมวดหมู่ย่อยไม่สำเร็จ" });
   }
 };

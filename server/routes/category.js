@@ -24,7 +24,6 @@ router.get('/category', listCategories);
 router.put('/category/:id', authCheck, adminCheck, updateCategory);
 router.delete('/category/:id', authCheck, adminCheck, removeCategory);
 
-EXAMPLE:
 // --- Routes for SubCategory ---
 // (เพิ่มส่วนนี้เข้ามาใหม่ทั้งหมด)
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { listProductBy } from "../../api/product";
 import ProductCard from "../card/ProductCard";
 import SwiperShowProduct from "../../utils/SwiperShowProduct";
@@ -21,8 +21,6 @@ const BestSeller = () => {
         console.log(err);
       });
   };
-
-  console.log(data);
 
   return (
     <SwiperShowProduct>

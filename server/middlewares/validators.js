@@ -124,14 +124,6 @@ exports.validateProductUpdate = [
   handleValidationErrors
 ];
 
-// ===== ORDER VALIDATORS =====
-exports.validateOrderCreate = [
-  body('userId')
-    .isInt()
-    .withMessage('Invalid user ID'),
-  handleValidationErrors
-];
-
 exports.validateTrackingNumber = [
   param('orderId')
     .isInt()
@@ -140,18 +132,5 @@ exports.validateTrackingNumber = [
     .trim()
     .notEmpty()
     .withMessage('Tracking number is required'),
-  handleValidationErrors
-];
-
-// ===== PAGINATION VALIDATORS =====
-exports.validatePagination = [
-  query('page')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('Page must be a positive number'),
-  query('limit')
-    .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be between 1 and 100'),
   handleValidationErrors
 ];

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getListAllUsers, changeUserStatus, changeUserRole } from "../../api/admin";
 import useEcomStore from "../../store/ecom-store";
 import { toast } from "react-toastify";
@@ -33,7 +33,7 @@ const TableUsers = () => {
       })
       .catch((err) => {
         console.error("Error fetching users:", err);
-        toast.error("ดึงข้อมูลไม่สำเร็จ (Failed to fetch users)");
+        toast.error("ดึงข้อมูลผู้ใช้ไม่สำเร็จ");
         setUsers([]); 
       })
       .finally(() => setLoading(false));
@@ -48,12 +48,12 @@ const TableUsers = () => {
     changeUserStatus(token, value)
       .then((res) => {
         handleGetUsers(token);
-        const message = !userStatus ? "เปิดใช้งาน (Enabled)" : "ปิดใช้งาน (Disabled)";
+        const message = !userStatus ? "เปิดใช้งานแล้ว" : "ปิดใช้งานแล้ว";
         toast.success(message);
       })
       .catch((err) => {
         console.error("Error updating status:", err);
-        toast.error("อัพเดทสถานะไม่สำเร็จ (Update Failed)");
+        toast.error("อัปเดตสถานะไม่สำเร็จ");
       })
       .finally(() => setUpdatingId(null));
   };
@@ -67,11 +67,11 @@ const TableUsers = () => {
     changeUserRole(token, value)
       .then((res) => {
         handleGetUsers(token);
-        toast.success(`เปลี่ยนสิทธิ์เรียบร้อย (Role updated to ${userRole})`);
+        toast.success(`เปลี่ยนสิทธิ์เป็น ${userRole} เรียบร้อย`);
       })
       .catch((err) => {
         console.error("Error updating role:", err);
-        toast.error("อัพเดทสิทธิ์ไม่สำเร็จ (Update Failed)");
+        toast.error("อัปเดตสิทธิ์ไม่สำเร็จ");
       })
       .finally(() => setUpdatingId(null));
   };
@@ -110,7 +110,7 @@ const TableUsers = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       {/* Header Section */}
       <div className="bg-white shadow-sm rounded-t-xl p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
@@ -139,7 +139,7 @@ const TableUsers = () => {
       {/* Table Section */}
       <div className="bg-white shadow-md rounded-b-xl overflow-hidden border border-gray-200 border-t-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold tracking-wider">
               <tr>
                 <th className="p-4 w-16 text-center">ลำดับ (No.)</th>

@@ -18,7 +18,7 @@ exports.listUsers = async (req,res) => {
 
     } catch (err) {
         console.log(err)
-        res.status(500).json({ message: "listUsers Error"})
+        res.status(500).json({ message: "ดึงข้อมูลผู้ใช้ไม่สำเร็จ"})
     }
 }
 
@@ -31,11 +31,11 @@ exports.changeStatus = async (req,res) => {
             data:{ enable: enable }
         })
 
-        res.send('Update Status success')
+        res.send('อัปเดตสถานะสำเร็จ')
 
     } catch (err) {
         console.log(err)
-        res.status(500).json({ message: "changeStatus Error"})
+        res.status(500).json({ message: "อัปเดตสถานะไม่สำเร็จ"})
     }
 }
 
@@ -47,11 +47,11 @@ exports.changeRole = async (req,res) => {
             where:{ id:Number(id)},
             data:{ role: role }
         })
-        res.send('Update Role Success')
+        res.send('เปลี่ยนสิทธิ์สำเร็จ')
 
     } catch (err) {
         console.log(err)
-        res.status(500).json({ message: "changeRole Error"})
+        res.status(500).json({ message: "เปลี่ยนสิทธิ์ไม่สำเร็จ"})
     }
 }
 
@@ -114,10 +114,10 @@ exports.userCart = async (req, res) => {
         },
       });
       console.log(newCart);
-      res.send("Add Cart Ok");
+      res.send("เพิ่มสินค้าลงตะกร้าแล้ว");
     } catch (err) {
       console.log(err);
-      res.status(500).json({ message: "Server Error" });
+      res.status(500).json({ message: "เกิดข้อผิดพลาดในการบันทึกตะกร้า" });
     }
 };
 
@@ -136,6 +136,9 @@ exports.getUserCart = async (req,res) => {
             }
         })
         //console.log(cart)
+        if (!cart) {
+            return res.json({ products: [], cartTotal: 0 });
+        }
         res.json({
             products: cart.products,
             cartTotal: cart.cartTotal
@@ -143,7 +146,7 @@ exports.getUserCart = async (req,res) => {
 
     } catch (err) {
         console.log(err)
-        res.status(500).json({ message: "getUserCart Error"})
+        res.status(500).json({ message: "ดึงข้อมูลตะกร้าไม่สำเร็จ"})
     }
 }
 
@@ -153,7 +156,7 @@ exports.emptyCart = async (req,res) => {
             where: { orderedById: Number(req.user.id)}
         })
         if(!cart){
-            return res.status(400).json({ message : 'No Cart'})
+            return res.status(400).json({ message : 'ไม่พบตะกร้าสินค้า'})
         }
         await prisma.productOnCart.deleteMany({
             where: { cartId: cart.id}
@@ -164,13 +167,13 @@ exports.emptyCart = async (req,res) => {
     
         console.log(result)
         res.json({
-            message : 'Cart Empty Success',
+            message : 'ล้างตะกร้าเรียบร้อยแล้ว',
             deletedCount: result.count
         })
 
     } catch (err) {
         console.log(err)
-        res.status(500).json({ message: "emptyCart Error"})
+        res.status(500).json({ message: "ล้างตะกร้าไม่สำเร็จ"})
     }
 }
 
@@ -205,34 +208,36 @@ exports.saveAddress = async (req,res) => {
           return res.status(400).json({ ok: false, message: "ที่อยู่นี้มีอยู่ในระบบแล้วครับ (ซ้ำ)" });
       }
 
-      // 3. ถ้าเป็น Main ให้เคลียร์อันอื่น
-      if (isMain) {
-          await prisma.address.updateMany({
-              where: { userId: req.user.id },
-              data: { isMain: false }
-          });
-      }
-
-      // 4. บันทึก (ใช้ค่าที่ Trim แล้ว)
-      const address = await prisma.address.create({
-          data:{
-              addrDetail: cleanAddrDetail,
-              province: cleanProvince,
-              district: cleanDistrict,
-              subDistrict: cleanSubDistrict,
-              zipcode: cleanZipcode,
-              recipient: recipient?.trim(),
-              phone: phone?.trim(),
-              isMain: isMain || false,
-              userId: req.user.id
+      // 3. ถ้าเป็น Main ให้เคลียร์อันอื่น (ใช้ transaction ป้องกัน race condition)
+      const address = await prisma.$transaction(async (tx) => {
+          if (isMain) {
+              await tx.address.updateMany({
+                  where: { userId: req.user.id },
+                  data: { isMain: false }
+              });
           }
-      })
+
+          // 4. บันทึก (ใช้ค่าที่ Trim แล้ว)
+          return await tx.address.create({
+              data:{
+                  addrDetail: cleanAddrDetail,
+                  province: cleanProvince,
+                  district: cleanDistrict,
+                  subDistrict: cleanSubDistrict,
+                  zipcode: cleanZipcode,
+                  recipient: recipient?.trim(),
+                  phone: phone?.trim(),
+                  isMain: isMain || false,
+                  userId: req.user.id
+              }
+          });
+      });
 
       res.json({ ok: true, message: "เพิ่มที่อยู่เรียบร้อยแล้ว" })
 
   } catch (err) {
       console.log(err)
-      res.status(500).json({ message: "saveAddress Error"})
+      res.status(500).json({ message: "บันทึกที่อยู่ไม่สำเร็จ"})
   }
 };
 
@@ -246,44 +251,67 @@ exports.getAddresses = async (req, res) => {
       res.json(addresses);
   } catch (err) {
       console.log(err);
-      res.status(500).json({ message: "Server Error" });
+      res.status(500).json({ message: "ดึงข้อมูลที่อยู่ไม่สำเร็จ" });
   }
 };
 
 // 3. แก้ไขที่อยู่ (Update)
 exports.updateAddress = async (req, res) => {
   try {
-      const { addressId, isMain, ...otherData } = req.body;
+      const { addressId, isMain, addrDetail, province, district, subDistrict, zipcode, recipient, phone } = req.body;
 
       // Validation ID
       if (!addressId) {
-          return res.status(400).json({ message: "Address ID is required" });
+          return res.status(400).json({ message: "กรุณาระบุรหัสที่อยู่" });
       }
 
-      // ถ้าจะตั้งเป็น Main ให้เคลียร์อันอื่นก่อน
+      // ถ้าจะตั้งเป็น Main ให้เคลียร์อันอื่นก่อน (ใช้ transaction ป้องกัน race condition)
       if (isMain) {
-          await prisma.address.updateMany({
-              where: { userId: req.user.id },
-              data: { isMain: false }
+          await prisma.$transaction(async (tx) => {
+              await tx.address.updateMany({
+                  where: { userId: req.user.id },
+                  data: { isMain: false }
+              });
+              await tx.address.update({
+                  where: {
+                      id: Number(addressId),
+                      userId: req.user.id
+                  },
+                  data: {
+                      ...(addrDetail && { addrDetail: addrDetail.trim() }),
+                      ...(province && { province: province.trim() }),
+                      ...(district && { district: district.trim() }),
+                      ...(subDistrict && { subDistrict: subDistrict.trim() }),
+                      ...(zipcode && { zipcode: zipcode.trim() }),
+                      ...(recipient && { recipient: recipient.trim() }),
+                      ...(phone && { phone: phone.trim() }),
+                      isMain: true
+                  }
+              });
+          });
+      } else {
+          await prisma.address.update({
+              where: {
+                  id: Number(addressId),
+                  userId: req.user.id
+              },
+              data: {
+                  ...(addrDetail && { addrDetail: addrDetail.trim() }),
+                  ...(province && { province: province.trim() }),
+                  ...(district && { district: district.trim() }),
+                  ...(subDistrict && { subDistrict: subDistrict.trim() }),
+                  ...(zipcode && { zipcode: zipcode.trim() }),
+                  ...(recipient && { recipient: recipient.trim() }),
+                  ...(phone && { phone: phone.trim() }),
+                  isMain: false
+              }
           });
       }
-
-      // อัปเดตข้อมูล (ใช้ userId เพื่อความปลอดภัย กันแก้ของคนอื่น)
-      const address = await prisma.address.update({
-          where: {
-              id: Number(addressId),
-              userId: req.user.id 
-          },
-          data: {
-              ...otherData,
-              isMain: isMain
-          }
-      });
 
       res.json({ ok: true, message: "แก้ไขที่อยู่เรียบร้อยแล้ว" });
   } catch (err) {
       console.log(err);
-      res.status(500).json({ message: "Server Error Update Address" });
+      res.status(500).json({ message: "แก้ไขที่อยู่ไม่สำเร็จ" });
   }
 };
 
@@ -302,7 +330,7 @@ exports.deleteAddress = async (req, res) => {
       res.json({ ok: true, message: "ลบที่อยู่เรียบร้อยแล้ว" });
   } catch (err) {
       console.log(err);
-      res.status(500).json({ message: "Server Error" });
+      res.status(500).json({ message: "ลบที่อยู่ไม่สำเร็จ" });
   }
 };
 
@@ -342,7 +370,7 @@ exports.saveOrder = async (req, res) => {
       });
 
       if (!cart || cart.products.length === 0) {
-        throw new Error("Cart is empty");
+        throw new Error("ตะกร้าสินค้าว่างเปล่า");
       }
 
       // 3. เช็คสต็อก และ ตัดสต็อกสินค้า
@@ -394,11 +422,11 @@ exports.saveOrder = async (req, res) => {
       return newOrder;
     });
 
-    res.json({ message: "Order placed successfully", order });
+    res.json({ message: "สั่งซื้อสำเร็จเรียบร้อยแล้ว", order });
 
   } catch (err) {
     console.log(err);
-    const message = err.message.includes("ขออภัย") ? err.message : "Order creation failed";
+    const message = err.message.includes("ขออภัย") ? err.message : "สร้างคำสั่งซื้อไม่สำเร็จ";
     res.status(500).json({ message: message });
   }
 };
@@ -415,7 +443,9 @@ exports.getOrder = async (req,res) => {
                       product: true
                   }
               },
-              orderedBy: true
+              orderedBy: {
+                  select: { id: true, email: true, name: true }
+              }
           },
           orderBy: { createdAt: "desc" }
       });
@@ -424,7 +454,7 @@ exports.getOrder = async (req,res) => {
 
   } catch (err) {
       console.log(err);
-      res.status(500).json({ message: "getOrder Error" });
+      res.status(500).json({ message: "ดึงข้อมูลคำสั่งซื้อไม่สำเร็จ" });
   }
 };
 
@@ -447,13 +477,13 @@ exports.updateProfile = async (req, res) => {
     const { password, ...userData } = user;
     
     res.json({
-      message: "Update Profile Success",
+      message: "บันทึกข้อมูลโปรไฟล์สำเร็จ",
       user: userData
     });
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "Server Error Update Profile" });
+    res.status(500).json({ message: "อัปเดตโปรไฟล์ไม่สำเร็จ" });
   }
 };  
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Trash2, Minus, Plus, ShoppingBag, Loader, ArrowRight } from "lucide-react";
 import useEcomStore from "../../store/ecom-store";
 import { Link, useNavigate } from "react-router-dom";

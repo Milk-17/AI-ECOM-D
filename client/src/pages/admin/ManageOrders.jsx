@@ -1,5 +1,4 @@
 // rafce
-import React from 'react'
 import TableOrders from '../../components/admin/TableOrders'
 
 const ManageOrders = () => {

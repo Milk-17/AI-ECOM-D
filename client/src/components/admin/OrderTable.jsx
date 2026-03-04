@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState, Fragment } from "react";
 import { numberFormat } from "../../utils/number";
-import { Loader, MapPin, Edit2, Save, X, ChevronDown, ChevronUp, Package, Phone, User } from "lucide-react";
+import { Loader, MapPin, Edit2, Save, X, ChevronDown, ChevronUp, Package, Phone, User, Navigation } from "lucide-react";
 import { toast } from "react-toastify";
 import { updateTrackingNumber } from "../../api/admin";
 
@@ -113,7 +113,7 @@ const OrderTable = ({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse">
+      <table className="w-full text-left border-collapse min-w-[900px]">
         <thead className="bg-gray-100 text-gray-700 uppercase text-sm">
           <tr>
             <th className="p-3 border-b text-center">ลำดับ</th>
@@ -130,7 +130,7 @@ const OrderTable = ({
         <tbody className="text-sm text-gray-600">
           {orders.length > 0 ? (
             orders.map((item, index) => (
-              <React.Fragment key={item.id || index}>
+              <Fragment key={item.id || index}>
                 <tr className="border-b hover:bg-gray-50 transition duration-150">
                   <td className="p-3 text-center">{index + 1}</td>
 
@@ -142,10 +142,10 @@ const OrderTable = ({
                         </div>
                         <div
                           className="text-xs text-gray-500 mt-1 max-w-[220px] truncate flex items-center gap-1"
-                          title={item.shippingAddress || item.orderedBy?.address}
+                          title={item.shippingAddress || "-"}
                         >
                           <MapPin size={12} className="flex-shrink-0" />
-                          {item.shippingAddress || item.orderedBy?.address || "-"}
+                          {item.shippingAddress || "-"}
                         </div>
                       </div>
                       
@@ -265,65 +265,109 @@ const OrderTable = ({
                   </td>
                 </tr>
 
-                {/* Expanded Row - Address Details */}
+                {/* Expanded Row - Shipping Address for THIS order */}
                 {expandedRows.has(item.id) && (
-                  <tr className="bg-blue-50 border-b border-blue-100">
+                  <tr className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
                     <td colSpan="8" className="p-4">
-                      <div className="bg-white rounded-lg shadow-sm p-4 border border-blue-200">
-                        <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                          <Package className="text-blue-600" size={18} />
-                          รายละเอียดที่อยู่จัดส่ง
-                        </h4>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div className="space-y-2">
-                            <div className="flex items-start gap-2">
-                              <User className="text-gray-400 flex-shrink-0 mt-1" size={16} />
-                              <div>
-                                <span className="text-gray-500 text-xs">ผู้รับ:</span>
-                                <p className="font-medium text-gray-800">
-                                  {item.recipient || item.orderedBy?.name || "-"}
-                                </p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-start gap-2">
-                              <Phone className="text-gray-400 flex-shrink-0 mt-1" size={16} />
-                              <div>
-                                <span className="text-gray-500 text-xs">เบอร์โทร:</span>
-                                <p className="font-medium text-gray-800">
-                                  {item.phone || "-"}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
+                      {item.shippingAddress ? (
+                        <div className="bg-white rounded-xl shadow-sm p-4 border border-blue-200">
+                          <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
+                            <Navigation className="text-blue-600" size={16} />
+                            ที่อยู่จัดส่ง (คำสั่งซื้อนี้)
+                          </h4>
+                          {(() => {
+                            // parse shippingAddress snapshot: "ผู้รับ: xxx เบอร์โทร: xxx ที่อยู่: xxx ตำบล/แขวง: xxx อำเภอ/เขต: xxx จังหวัด: xxx รหัสไปรษณีย์: xxx"
+                            const text = item.shippingAddress;
+                            const extract = (label) => {
+                              const regex = new RegExp(label + ":\\s*([^\\n]*?)(?=\\s+(?:ผู้รับ|เบอร์โทร|ที่อยู่|ตำบล|อำเภอ|จังหวัด|รหัสไปรษณีย์):|$)");
+                              const match = text.match(regex);
+                              return match ? match[1].trim() : null;
+                            };
+                            const recipient = extract("ผู้รับ");
+                            const phone = extract("เบอร์โทร");
+                            const addr = extract("ที่อยู่");
+                            const subDistrict = extract("ตำบล/แขวง");
+                            const district = extract("อำเภอ/เขต");
+                            const province = extract("จังหวัด");
+                            const zipcode = extract("รหัสไปรษณีย์");
+                            const hasParsed = recipient || phone || addr || subDistrict || district || province || zipcode;
 
-                          <div className="space-y-2">
-                            <div className="flex items-start gap-2">
-                              <MapPin className="text-gray-400 flex-shrink-0 mt-1" size={16} />
-                              <div className="flex-1">
-                                <span className="text-gray-500 text-xs">ที่อยู่เต็ม:</span>
-                                <p className="font-medium text-gray-800 leading-relaxed">
-                                  {item.shippingAddress || item.orderedBy?.address || "-"}
+                            if (!hasParsed) {
+                              // fallback: แสดงเป็น text ธรรมดา
+                              return (
+                                <p className="text-sm text-gray-700 leading-relaxed bg-blue-50 rounded-lg p-3 border border-blue-100">
+                                  {text}
                                 </p>
-                                
-                                {(item.province || item.district || item.subDistrict || item.zipcode) && (
-                                  <div className="mt-2 text-xs text-gray-600 space-y-1">
-                                    {item.subDistrict && <p>ตำบล/แขวง: {item.subDistrict}</p>}
-                                    {item.district && <p>อำเภอ/เขต: {item.district}</p>}
-                                    {item.province && <p>จังหวัด: {item.province}</p>}
-                                    {item.zipcode && <p>รหัสไปรษณีย์: {item.zipcode}</p>}
+                              );
+                            }
+
+                            return (
+                              <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-4 text-sm">
+                                {/* ผู้รับ & เบอร์โทร */}
+                                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mb-3">
+                                  {recipient && recipient !== "ไม่ระบุ" && (
+                                    <div className="flex items-center gap-1.5">
+                                      <User className="text-blue-500 flex-shrink-0" size={15} />
+                                      <span className="font-semibold text-gray-800">{recipient}</span>
+                                    </div>
+                                  )}
+                                  {phone && phone !== "ไม่ระบุ" && (
+                                    <div className="flex items-center gap-1.5">
+                                      <Phone className="text-blue-500 flex-shrink-0" size={15} />
+                                      <span className="text-gray-700">{phone}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* ที่อยู่ */}
+                                {addr && (
+                                  <div className="flex items-start gap-1.5 mb-3">
+                                    <MapPin className="text-blue-500 flex-shrink-0 mt-0.5" size={15} />
+                                    <span className="text-gray-700 leading-relaxed">{addr}</span>
                                   </div>
                                 )}
+
+                                {/* ตำบล / อำเภอ / จังหวัด / ไปรษณีย์ */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 pt-3 border-t border-dashed border-blue-200">
+                                  {subDistrict && (
+                                    <div>
+                                      <span className="text-[11px] text-gray-400 uppercase tracking-wider">ตำบล/แขวง</span>
+                                      <p className="text-gray-700 font-medium text-xs">{subDistrict}</p>
+                                    </div>
+                                  )}
+                                  {district && (
+                                    <div>
+                                      <span className="text-[11px] text-gray-400 uppercase tracking-wider">อำเภอ/เขต</span>
+                                      <p className="text-gray-700 font-medium text-xs">{district}</p>
+                                    </div>
+                                  )}
+                                  {province && (
+                                    <div>
+                                      <span className="text-[11px] text-gray-400 uppercase tracking-wider">จังหวัด</span>
+                                      <p className="text-gray-700 font-medium text-xs">{province}</p>
+                                    </div>
+                                  )}
+                                  {zipcode && (
+                                    <div>
+                                      <span className="text-[11px] text-gray-400 uppercase tracking-wider">รหัสไปรษณีย์</span>
+                                      <p className="text-gray-700 font-medium text-xs">{zipcode}</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </div>
+                            );
+                          })()}
                         </div>
-                      </div>
+                      ) : (
+                        <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200 text-center">
+                          <MapPin className="text-gray-300 mx-auto mb-2" size={24} />
+                          <p className="text-sm text-gray-400">ไม่พบข้อมูลที่อยู่จัดส่ง</p>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 )}
-              </React.Fragment>
+              </Fragment>
             ))
           ) : (
             <tr>

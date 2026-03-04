@@ -10,6 +10,10 @@ exports.changeOrderStatus = async (req, res) => {
       include: { products: true }
     });
 
+    if (!originalOrder) {
+      return res.status(404).json({ message: "ไม่พบออเดอร์ที่ระบุ" });
+    }
+
     // ป้องกัน: ถ้าออเดอร์เดิมมัน Cancelled อยู่แล้ว ไม่ต้องทำอะไร (กันคืนสต็อกเบิ้ล)
     if (originalOrder.orderStatus === 'Cancelled') {
        return res.status(400).json({ message: "ออเดอร์นี้ถูกยกเลิกไปแล้ว (คืนสต็อกไปแล้ว)" });
@@ -43,7 +47,7 @@ exports.changeOrderStatus = async (req, res) => {
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "changeOrderStatus Error" });
+    res.status(500).json({ message: "อัปเดตสถานะคำสั่งซื้อไม่สำเร็จ" });
   }
 };
 exports.getOrderAdmin = async (req,res) => {
@@ -59,8 +63,7 @@ exports.getOrderAdmin = async (req,res) => {
                 orderedBy :{
                     select:{
                         id: true,
-                        email: true,
-                        addresses: true
+                        email: true
                     }
                 }
             }
@@ -69,7 +72,7 @@ exports.getOrderAdmin = async (req,res) => {
 
     } catch (err) {
         console.log(err)
-        res.status(500).json({ message: "getOrderAdmin Error"})
+        res.status(500).json({ message: "ดึงข้อมูลคำสั่งซื้อไม่สำเร็จ"})
     }
 }
 exports.getOrderStats = async (req, res) => {
@@ -100,7 +103,7 @@ exports.getOrderStats = async (req, res) => {
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "Get Order Stats Error" });
+    res.status(500).json({ message: "ดึงสถิติคำสั่งซื้อไม่สำเร็จ" });
   }
 };
 
@@ -117,6 +120,6 @@ exports.getAdminLogs = async (req, res) => {
     res.json(logs);
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: "ดึงประวัติการแก้ไขไม่สำเร็จ" });
   }
 };

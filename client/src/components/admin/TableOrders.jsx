@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getOrdersAdmin, changeOrderStatus } from "../../api/admin";
 import useEcomStore from "../../store/ecom-store";
 import { toast } from "react-toastify";

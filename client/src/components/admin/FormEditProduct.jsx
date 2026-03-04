@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import useEcomStore from "../../store/ecom-store";
 import { readProduct, updateProduct } from "../../api/product";
 import { toast } from "react-toastify";
@@ -88,7 +88,9 @@ const FormEditProduct = () => {
     try {
       // ส่งข้อมูลไปอัปเดต
       const res = await updateProduct(token, id, form);
-      toast.success(`แก้ไขสินค้า "${res.data.title}" เรียบร้อย`);
+      
+      // เก็บ toast ไว้ใน sessionStorage แล้ว navigate กลับหน้า Product
+      sessionStorage.setItem("product_toast", `แก้ไขสินค้า "${res.data.title}" เรียบร้อย`);
       navigate("/admin/product");
     } catch (err) {
       console.log(err);

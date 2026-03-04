@@ -1,22 +1,30 @@
 // src/components/admin/PendingOrders.jsx
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState } from "react";
+import useEcomStore from "../../store/ecom-store";
 import { Clock, User, Calendar, CreditCard, FileSearch } from "lucide-react"; // ใช้ Icon เพื่อความสวยงาม
 import { numberFormat } from "../../utils/number"; // เรียกใช้ function จัดการตัวเลข (ถ้ามี)
 // หรือถ้าไม่มี numberFormat ให้ใช้ .toLocaleString() เหมือนเดิมได้ครับ
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-});
+import { getOrdersAdmin } from "../../api/admin";
 
 const PendingOrders = () => {
+  const token = useEcomStore((state) => state.token);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = async () => {
+    if (!token) return;
     try {
-      const res = await api.get("/order/pending");
-      setOrders(res.data);
+      const res = await getOrdersAdmin(token);
+      let orderList = [];
+      if (Array.isArray(res.data)) orderList = res.data;
+      else if (res.data && Array.isArray(res.data.orders)) orderList = res.data.orders;
+      
+      // กรองเฉพาะ "Not Process" (รอตรวจสอบ) แล้วเรียงจากใหม่ไปเก่า
+      const pending = orderList
+        .filter((o) => o.orderStatus === "Not Process")
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      setOrders(pending);
     } catch (err) {
       console.error("Error fetching pending orders:", err);
     } finally {
@@ -26,7 +34,7 @@ const PendingOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [token]);
 
   // ฟังก์ชันจัดรูปแบบวันที่ให้สวยงาม
   const formatDate = (dateString) => {

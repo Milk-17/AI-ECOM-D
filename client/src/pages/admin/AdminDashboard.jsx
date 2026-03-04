@@ -1,4 +1,3 @@
-import React from 'react'
 import RecentOrders from '../../components/admin/RecentOrders'
 import PendingOrders from '../../components/admin/PendingOrders'
 import AdminLogsTable from '../../components/admin/AdminLogsTable'

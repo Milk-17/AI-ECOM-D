@@ -1,4 +1,3 @@
-import React from "react";
 import ContentCarousel from "../components/Home/ContentCarousel";
 import BestSeller from "../components/Home/BestSeller";
 import NewProduct from "../components/Home/NewProduct";

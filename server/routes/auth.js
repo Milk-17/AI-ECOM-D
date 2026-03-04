@@ -30,7 +30,9 @@ const loginLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,  // 5 นาที
   max: 5,                    // 5 attempts - Industry Standard ✓
   keyGenerator: (req) => req.ip, // Get real IP from IIS trust proxy
-  message: 'ลองเข้าสู่ระบบมากเกินไป กรุณารอสักครู่',
+  message: { message: 'คุณลองเข้าสู่ระบบมากเกินไป กรุณารอ 5 นาทีแล้วลองใหม่' },
+  standardHeaders: true,
+  legacyHeaders: false,
   skipSuccessfulRequests: true  // ไม่นับ successful requests
 });
 
@@ -38,14 +40,18 @@ const registerLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,  // 10 นาที (was 5) - Industry Standard ✓
   max: 10,                    // 10 attempts (was 5) - Industry Standard ✓
   keyGenerator: (req) => req.ip,
-  message: 'ลองลงทะเบียนมากเกินไป กรุณารอสักครู่'
+  message: { message: 'คุณลองลงทะเบียนมากเกินไป กรุณารอ 10 นาทีแล้วลองใหม่' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 const passwordResetLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,  // 10 นาที (was 5) - More generous ✓
   max: 5,                    // 5 attempts - Industry Standard ✓
   keyGenerator: (req) => req.ip,
-  message: 'ลองรีเซ็ตรหัสผ่านมากเกินไป กรุณารอสักครู่'
+  message: { message: 'คุณลองรีเซ็ตรหัสผ่านมากเกินไป กรุณารอ 10 นาทีแล้วลองใหม่' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // --- Routes ---

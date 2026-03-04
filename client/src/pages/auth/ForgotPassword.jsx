@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom"; // อย่าลืม import Link
@@ -18,11 +18,19 @@ const ForgotPassword = () => {
     try {
       // ยิงไปที่ Backend (ต้องแน่ใจว่า path ถูกต้อง)
      const res = await api.post("/forgot-password", { email });
-      toast.success(res.data.message || "ลิงก์รีเซ็ตรหัสผ่านถูกส่งไปยังอีเมลแล้ว (Reset link sent!)");
+      toast.success(res.data.message || "ลิงก์รีเซ็ตรหัสผ่านถูกส่งไปยังอีเมลแล้ว");
       setEmail(""); // เคลียร์ช่อง
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || "เกิดข้อผิดพลาด (Something went wrong)");
+      const status = err.response?.status;
+      const data = err.response?.data;
+      const errMsg = typeof data === 'string' ? data : data?.message;
+
+      if (status === 429) {
+        toast.warning(errMsg || 'คุณลองรีเซ็ตรหัสผ่านมากเกินไป กรุณารอสักครู่', { autoClose: 5000 });
+      } else {
+        toast.error(errMsg || 'เกิดข้อผิดพลาด');
+      }
     } finally {
       setLoading(false); // หยุดโหลดไม่ว่าจะสำเร็จหรือล้มเหลว
     }

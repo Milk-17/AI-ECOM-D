@@ -1,4 +1,3 @@
-import React from "react";
 import { Search, Filter, RefreshCcw } from "lucide-react";
 
 const ProductFilterHeader = ({ 

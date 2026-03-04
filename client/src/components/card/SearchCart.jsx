@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import useEcomStore from "../../store/ecom-store";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";

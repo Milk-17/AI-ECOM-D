@@ -20,14 +20,14 @@ exports.authCheck = async (req,res,next) => {
                 email: req.user.email
             }
         })
-        if(!user.enable){
-            return res.status(400).json({ message : 'This account cannot access'}) //ถ้า Uset ปิดอยู่ จะแสดงบรรทัดนี้
+        if(!user || !user.enable){
+            return res.status(400).json({ message : 'This account cannot access'}) //ถ้า User ไม่มีหรือปิดอยู่ จะแสดงบรรทัดนี้
         }
         next()
     } catch (err){
         // 🔒 SECURITY: ไม่ log error details ให้ client เห็น
         console.error('Auth verification failed:', err.message); // Log เฉพาะ message
-        res.status(500).json({ message: "Token in Valid Error"})
+        res.status(401).json({ message: "Token is invalid or expired"})
     }
 }
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import useEcomStore from "../../store/ecom-store";
@@ -32,8 +32,16 @@ const Login = () => {
       toast.success("ยินดีต้อนรับกลับมา");
     } catch (err) {
       console.log(err);
-      const errMsg = err.response?.data?.message;
-      toast.error(errMsg);
+      const status = err.response?.status;
+      const data = err.response?.data;
+      // รองรับทั้ง JSON { message: "..." } และ plain string
+      const errMsg = typeof data === 'string' ? data : data?.message;
+
+      if (status === 429) {
+        toast.warning(errMsg || 'คุณลองเข้าสู่ระบบมากเกินไป กรุณารอสักครู่', { autoClose: 5000 });
+      } else {
+        toast.error(errMsg || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+      }
     } finally {
       setLoading(false);
     }

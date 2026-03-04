@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ProductCard from "../components/card/ProductCard";
 import useEcomStore from "../store/ecom-store";
 import SearchCart from "../components/card/SearchCart";
@@ -20,19 +20,19 @@ const Shop = () => {
       {/* Desktop Layout */}
       <div className="hidden lg:flex gap-4 p-5">
         {/* Sidebar Search - เล็กลง */}
-        <aside className="w-[280px] bg-gradient-to-br from-white to-gray-50 p-4 rounded-xl shadow-lg border border-gray-200 sticky top-3 h-fit">
+        <aside className="w-[280px] bg-gradient-to-br from-white to-gray-50 p-4 rounded-xl shadow-lg border border-gray-200 sticky top-20 h-fit">
           <SearchCart />
         </aside>
 
         {/* Product Grid - กว้างขึ้น แสดง 4-5 คอลัมน์ */}
         <main className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {products.map((item, index) => (
-            <ProductCard key={index} item={item} />
+          {products.map((item) => (
+            <ProductCard key={item.id} item={item} />
           ))}
         </main>
 
         {/* Cart Sidebar - เล็กลง */}
-        <aside className="w-[320px] bg-gradient-to-br from-white to-gray-50 p-4 rounded-xl shadow-lg border border-gray-200 sticky top-3 h-fit">
+        <aside className="w-[320px] bg-gradient-to-br from-white to-gray-50 p-4 rounded-xl shadow-lg border border-gray-200 sticky top-20 h-fit">
           <CartCard />
         </aside>
       </div>
@@ -41,13 +41,13 @@ const Shop = () => {
       <div className="lg:hidden p-4">
         {/* Product Grid for Mobile */}
         <div className="grid grid-cols-2 gap-3 mb-20">
-          {products.map((item, index) => (
-            <ProductCard key={index} item={item} />
+          {products.map((item) => (
+            <ProductCard key={item.id} item={item} />
           ))}
         </div>
 
         {/* Floating Buttons */}
-        <div className="fixed bottom-4 right-4 flex gap-3 z-40">
+        <div className="fixed bottom-20 right-4 flex gap-3 z-[42]">
           <button
             onClick={() => setShowSearch(true)}
             className="bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition-all active:scale-95"

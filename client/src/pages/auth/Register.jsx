@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { z } from "zod";
@@ -63,14 +63,21 @@ const Register = () => {
       const res = await api.post("/register", data);
 
       if (res.data.success) {
-        toast.success(res.data.message); // สมมติว่า Backend ส่ง message มา หรือจะแก้เป็น "ลงทะเบียนสำเร็จ" ก็ได้
+        toast.success(res.data.message || "ลงทะเบียนสำเร็จ");
         setTimeout(() => {
           navigate("/login");
         }, 1500);
       }
     } catch (err) {
-      const errMsg = err.response?.data?.message || "เกิดข้อผิดพลาดในการลงทะเบียน";
-      toast.error(errMsg);
+      const status = err.response?.status;
+      const data = err.response?.data;
+      const errMsg = typeof data === 'string' ? data : data?.message;
+
+      if (status === 429) {
+        toast.warning(errMsg || 'คุณลองลงทะเบียนมากเกินไป กรุณารอสักครู่', { autoClose: 5000 });
+      } else {
+        toast.error(errMsg || 'เกิดข้อผิดพลาดในการลงทะเบียน');
+      }
       console.log(err);
     } finally {
       setLoading(false);

@@ -1,4 +1,4 @@
-import React , { useState, useEffect} from 'react'
+import { useState, useEffect} from 'react'
 import useEcomStore from '../store/ecom-store'
 import { currentAdmin } from '../api/auth'
 import LodingToRedirect from '../routes/LoadingToRedirect'
@@ -6,21 +6,31 @@ import LodingToRedirect from '../routes/LoadingToRedirect'
 const ProtectRouteAdmin = ( {element} ) => {
 
     const [ok, setOk] = useState(false)
+    const [loading, setLoading] = useState(true)
     const user = useEcomStore ((state) => state.user)
     const token = useEcomStore ((state) => state.token)
     
 
     useEffect(() => {
       if (user && token) {
-        //send to backend 
         currentAdmin(token)
         .then((res) => setOk(true))
         .catch((err) => setOk(false))
-        
+        .finally(() => setLoading(false))
+      } else {
+        setLoading(false)
       }
-    },[])
+    },[user, token])
 
-  return ok? element : <LodingToRedirect />
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  return ok ? element : <LodingToRedirect />
   
 }
 

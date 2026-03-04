@@ -1,5 +1,5 @@
 // src/components/ChatbotWidget.jsx
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   Send, X, MessageCircle, Cpu, ShoppingCart, ExternalLink, RefreshCw 
 } from "lucide-react";
@@ -14,7 +14,8 @@ const parseMessageWithLinks = (text) => {
   const parts = text.split(urlPattern);
 
   return parts.map((part, index) => {
-    if (urlPattern.test(part)) {
+    // Use a fresh regex for each test to avoid lastIndex issues
+    if (/^https?:\/\//.test(part)) {
       return (
         <a
           key={index}
@@ -232,6 +233,45 @@ const ChatbotWidget = () => {
   ]);
   const [isSending, setIsSending] = useState(false);
   const sessionIdRef = useRef("");
+
+  // --- Drag State ---
+  const [btnPos, setBtnPos] = useState({ x: 24, y: 24 }); // distance from right, bottom
+  const isDragging = useRef(false);
+  const hasMoved = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+  const btnRef = useRef(null);
+
+  const handlePointerDown = useCallback((e) => {
+    isDragging.current = true;
+    hasMoved.current = false;
+    dragStart.current = {
+      x: e.clientX,
+      y: e.clientY,
+      posX: btnPos.x,
+      posY: btnPos.y,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, [btnPos]);
+
+  const handlePointerMove = useCallback((e) => {
+    if (!isDragging.current) return;
+    const dx = dragStart.current.x - e.clientX;
+    const dy = dragStart.current.y - e.clientY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved.current = true;
+    if (!hasMoved.current) return;
+
+    const btnSize = 56; // w-14 = 56px
+    const newX = Math.max(8, Math.min(window.innerWidth - btnSize - 8, dragStart.current.posX + dx));
+    const newY = Math.max(8, Math.min(window.innerHeight - btnSize - 8, dragStart.current.posY + dy));
+    setBtnPos({ x: newX, y: newY });
+  }, []);
+
+  const handlePointerUp = useCallback((e) => {
+    isDragging.current = false;
+    if (!hasMoved.current) {
+      setIsOpen((prev) => !prev);
+    }
+  }, []);
   const messagesEndRef = useRef(null);
 
   // --- Suggestion Chips ---
@@ -255,6 +295,10 @@ const ChatbotWidget = () => {
 
   const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL; 
 
+  if (!N8N_WEBHOOK_URL) {
+    console.warn('ChatbotWidget: VITE_N8N_WEBHOOK_URL is not configured');
+  }
+
   const toggleChat = () => setIsOpen((prev) => !prev);
 
   // --- Handle Submit (Updated with Robust Error Handling) ---
@@ -266,6 +310,15 @@ const ChatbotWidget = () => {
     setInput("");
     setMessages((prev) => [...prev, { from: "user", type: "text", content: userText }]);
     setIsSending(true);
+
+    if (!N8N_WEBHOOK_URL) {
+      setMessages((prev) => [
+        ...prev,
+        { from: "bot", type: "text", content: "ขอโทษครับ ระบบแชทยังไม่ได้ตั้งค่า" },
+      ]);
+      setIsSending(false);
+      return;
+    }
 
     try {
       const res = await fetch(N8N_WEBHOOK_URL, {
@@ -322,7 +375,7 @@ const ChatbotWidget = () => {
   return (
     <>
       {isOpen && (
-        <div className="fixed bottom-24 right-4 w-[400px] md:w-[450px] max-w-[95vw] h-[600px] max-h-[80vh] shadow-2xl rounded-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-4 border border-gray-800 flex flex-col font-sans">
+        <div className="fixed bottom-24 right-4 w-[calc(100vw-2rem)] sm:w-[400px] md:w-[450px] max-w-[95vw] h-[70vh] sm:h-[600px] max-h-[80vh] shadow-2xl rounded-2xl overflow-hidden z-[45] animate-in fade-in slide-in-from-bottom-4 border border-gray-800 flex flex-col font-sans">
           
           {/* Header */}
           <div className="bg-gray-950 px-5 py-4 border-b border-gray-800 flex items-center justify-between shadow-sm z-10">
@@ -409,9 +462,16 @@ const ChatbotWidget = () => {
         </div>
       )}
 
-      {/* Toggle Button */}
+      {/* Toggle Button — Draggable */}
       {!isOpen && (
-          <button onClick={toggleChat} className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center active:scale-90 transition-all z-40 animate-bounce-slow">
+          <button
+            ref={btnRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            className="fixed w-14 h-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition-colors z-[45] touch-none select-none"
+            style={{ right: btnPos.x, bottom: btnPos.y, cursor: isDragging.current ? 'grabbing' : 'grab' }}
+          >
             <MessageCircle size={28} />
           </button>
       )}

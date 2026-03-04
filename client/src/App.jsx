@@ -1,5 +1,5 @@
 // rafce
-import React, { useEffect } from "react" 
+import { useEffect } from "react" 
 import AppRoutes from "./routes/AppRoutes"
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -50,21 +50,23 @@ const App = () => {
     if (!token) return; // ถ้าไม่มี token ไม่ต้องเช็ก
 
     let idleTimer;
+    let debounceTimer;
     
     const IDLE_TIME = 30 * 60 * 1000; // 30 นาที (milliseconds)
+    const DEBOUNCE_TIME = 1000; // debounce 1 วินาที
 
     const resetIdleTimer = () => {
-      if (idleTimer) {
-        clearTimeout(idleTimer);
-      }
-      
-      // ตั้ง timer ใหม่ - ถ้าไม่มี activity 30 นาที -> logout
-      idleTimer = setTimeout(() => {
-        clearStore();
-        alert("ไม่มีการใช้งาน ระบบออกจากระบบอัตโนมัติ (30 นาที)"); 
-        console.log("Idle timeout: User logged out due to inactivity (30 minutes)");
-        window.location.href = "/"; // ดีดไปหน้า Login ทันที
-      }, IDLE_TIME);
+      // Debounce: ไม่ reset timer ทุก event แต่รอ 1 วินาทีหลัง event สุดท้าย
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+          clearStore();
+          alert("ไม่มีการใช้งาน ระบบออกจากระบบอัตโนมัติ (30 นาที)"); 
+          console.log("Idle timeout: User logged out due to inactivity (30 minutes)");
+          window.location.href = "/";
+        }, IDLE_TIME);
+      }, DEBOUNCE_TIME);
     };
 
     // เริ่มทำงานครั้งแรก
@@ -79,9 +81,8 @@ const App = () => {
 
     // Clean up
     return () => {
-      if (idleTimer) {
-        clearTimeout(idleTimer);
-      }
+      if (idleTimer) clearTimeout(idleTimer);
+      if (debounceTimer) clearTimeout(debounceTimer);
       events.forEach(event => {
         window.removeEventListener(event, resetIdleTimer);
       });
@@ -91,7 +92,7 @@ const App = () => {
 
   return (
     <>
-    <ToastContainer />
+    <ToastContainer autoClose={1500} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover={false} />
       <AppRoutes/>
     </>
 

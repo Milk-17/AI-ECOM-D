@@ -1,41 +1,67 @@
 const prisma = require('../config/prisma');
-const { authCheck } = require('../middlewares/authCheck');
+
 exports.createOrder = async (req, res) => {
   try {
-    const userId = req.user.id; // จาก middleware auth
+    const userId = req.user.id;
     const cart = await prisma.cart.findFirst({
       where: { orderedById: userId },
       include: { products: { include: { product: true } } },
     });
 
-    if (!cart) return res.status(400).json({ message: 'Cart is empty' });
+    if (!cart || cart.products.length === 0) {
+      return res.status(400).json({ message: 'ตะกร้าสินค้าว่างเปล่า' });
+    }
 
-    const order = await prisma.order.create({
-      data: {
-        orderedById: userId,
-        cartTotal: cart.cartTotal,
-        products: {
-          create: cart.products.map(p => ({
-            productId: p.productId,
-            count: p.count,
-            price: p.price,
-          })),
+    // ใช้ transaction เพื่อความปลอดภัยของข้อมูล
+    const order = await prisma.$transaction(async (tx) => {
+      // เช็คสต็อคและหักสต็อค
+      for (const item of cart.products) {
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+        });
+        if (!product || item.count > product.quantity) {
+          throw new Error(`สินค้า "${product?.title || 'Unknown'}" หมด หรือมีไม่พอ`);
+        }
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            quantity: { decrement: item.count },
+            sold: { increment: item.count },
+          },
+        });
+      }
+
+      // สร้าง order
+      const newOrder = await tx.order.create({
+        data: {
+          orderedById: userId,
+          cartTotal: cart.cartTotal,
+          products: {
+            create: cart.products.map(p => ({
+              productId: p.productId,
+              count: p.count,
+              price: p.price,
+            })),
+          },
+          amount: cart.cartTotal,
+          status: 'Paid',
+          orderStatus: 'Not Process',
         },
-        amount: cart.cartTotal,
-        status: 'Paid',
-        currentcy: 'THB',
-      },
-      include: { products: { include: { product: true } } },
-    });
+        include: { products: { include: { product: true } } },
+      });
 
-    // เคลียร์ตะกร้า
-    await prisma.productOnCart.deleteMany({ where: { cartId: cart.id } });
-    await prisma.cart.update({ where: { id: cart.id }, data: { cartTotal: 0 } });
+      // เคลียร์ตะกร้า
+      await tx.productOnCart.deleteMany({ where: { cartId: cart.id } });
+      await tx.cart.delete({ where: { id: cart.id } });
+
+      return newOrder;
+    });
 
     res.json(order);
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: 'Server error' });
+    const message = err.message.includes('สินค้า') ? err.message : 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ';
+    res.status(500).json({ message });
   }
 };
 
@@ -50,7 +76,7 @@ exports.getOrders = async (req, res) => {
     res.json(orders);
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'ดึงข้อมูลคำสั่งซื้อไม่สำเร็จ' });
   }
 };
 
@@ -66,7 +92,9 @@ exports.getRecentOrders = async (req, res) => {
         products: {
           include: { product: true } // ดึงรายละเอียดสินค้า
         },
-        orderedBy: true, // ดึงข้อมูลผู้สั่ง
+        orderedBy: {
+            select: { id: true, email: true, name: true }
+        },
       },
     });
     res.json(orders);
@@ -80,11 +108,13 @@ exports.getRecentOrders = async (req, res) => {
 exports.getPendingOrders = async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
-      where: { orderStatus: "Not Process" }, // ใช้ field orderStatus
+      where: { orderStatus: "Not Process" },
       orderBy: { createdAt: 'desc' },
       include: {
         products: { include: { product: true } },
-        orderedBy: true,
+        orderedBy: {
+            select: { id: true, email: true, name: true }
+        },
       },
     });
     res.json(orders);
@@ -124,7 +154,7 @@ exports.updateTrackingNumber = async (req, res) => {
     const { trackingNumber } = req.body;
 
     if (!trackingNumber || trackingNumber.trim() === "") {
-      return res.status(400).json({ message: 'Tracking number is required' });
+      return res.status(400).json({ message: 'กรุณาระบุเลขพัสดุ' });
     }
 
     const updatedOrder = await prisma.order.update({
@@ -133,12 +163,12 @@ exports.updateTrackingNumber = async (req, res) => {
     });
 
     res.status(200).json({
-      message: 'Tracking number updated successfully',
+      message: 'บันทึกเลขพัสดุสำเร็จ',
       order: updatedOrder
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการบันทึกเลขพัสดุ', error: error.message });
   }
 };
 

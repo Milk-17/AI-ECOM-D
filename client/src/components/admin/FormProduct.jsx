@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import useEcomStore from "../../store/ecom-store";
 import { createProduct, deleteProduct } from "../../api/product";
 import { toast } from "react-toastify";
@@ -60,6 +60,15 @@ const FormProduct = () => {
     getProduct(1000); 
   }, [getCategory, getProduct, token]);
 
+  // ตรวจ sessionStorage สำหรับ toast หลังรีหน้า
+  useEffect(() => {
+    const pendingToast = sessionStorage.getItem("product_toast");
+    if (pendingToast) {
+      sessionStorage.removeItem("product_toast");
+      toast.success(pendingToast);
+    }
+  }, []);
+
   // --- Handle Form Input ---
   const handleOnChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -68,11 +77,11 @@ const FormProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.categoryId) {
-      toast.warning("กรุณาเลือกหมวดหมู่ย่อย (Please select SubCategory)");
+      toast.warning("กรุณาเลือกหมวดหมู่ย่อย");
       return;
     }
     if (form.price < 0 || form.quantity < 0) {
-      toast.warning("ราคาและจำนวนต้องไม่ติดลบ (Price/Qty must be positive)");
+      toast.warning("ราคาและจำนวนต้องไม่ติดลบ");
       return;
     }
 
@@ -80,16 +89,12 @@ const FormProduct = () => {
       // ส่ง form ไป Backend (ไม่ต้องมี productUrl แล้ว)
       const res = await createProduct(token, form);
       const productTitle = res.data?.product?.title || form.title;
-      toast.success(`เพิ่มสินค้า ${productTitle} เรียบร้อย (Success)`);
       
-      // Reset form
-      setForm({ ...initialState });
-      setSpecKey("");
-      setSpecValue("");
-      setFormMainCatId("");
-      getProduct(1000);
+      // เก็บ toast ไว้ใน sessionStorage แล้วรีหน้า
+      sessionStorage.setItem("product_toast", `เพิ่มสินค้า "${productTitle}" เรียบร้อยแล้ว`);
+      window.location.reload();
     } catch (err) {
-      const errMsg = err.response?.data?.message || "Something went wrong";
+      const errMsg = err.response?.data?.message || "เกิดข้อผิดพลาด";
       toast.error(errMsg);
     }
   };
@@ -113,14 +118,14 @@ const FormProduct = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("ยืนยันการลบสินค้า? (Confirm Delete?)")) {
+    if (window.confirm("ยืนยันการลบสินค้า?")) {
       try {
         await deleteProduct(token, id);
-        toast.success("ลบสินค้าเรียบร้อย (Deleted)");
+        toast.success("ลบสินค้าเรียบร้อยแล้ว");
         actionDeleteProduct(id);
       } catch (err) {
         console.log(err);
-        toast.error("ลบไม่สำเร็จ (Delete Failed)");
+        toast.error("ลบสินค้าไม่สำเร็จ");
       }
     }
   };

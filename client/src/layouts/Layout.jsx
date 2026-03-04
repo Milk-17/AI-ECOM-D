@@ -1,4 +1,3 @@
-import React from "react";
 import { Outlet } from "react-router-dom";
 import MainNav from "../components/MainNav";
 import ChatbotWidget from "../components/ChatbotWidget";

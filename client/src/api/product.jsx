@@ -95,12 +95,6 @@ export const listProductBy = async (sort, order, limit) => {
   });
 };
 
-export const getAdminLogs = async (token) => {
-  return await api.get('/product/admin/logs', {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-};
-
 export const getProductById = async (id) => {
   return await api.get(`/product/${id}`);
 };
